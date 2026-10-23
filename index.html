@@ -12,245 +12,371 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --paper:#f5f1e6; --paper2:#fffdf7; --ink:#1b2a4a; --muted:#6b7385; --line:#c9cfdb;
-    --grid:rgba(27,42,74,.06); --margin:#d9534f; --accent:#1f6fd1; --err:#b42318; --ok:#1f8a4c;
+    --paper:#f5f1e6; --paper2:#fffdf7; --ink:#1b2a4a; --muted:#6b7385; --line:#cdd2dc;
+    --grid:rgba(27,42,74,.055); --accent:#1f6fd1; --err:#b42318; --ok:#1f8a4c; --fault:#fdeeee;
     --mono:"JetBrains Mono",ui-monospace,Menlo,monospace; --sans:"Inter",-apple-system,system-ui,sans-serif;
-    --cell:clamp(52px,17vw,68px);
+    --cell:clamp(52px,16.5vw,66px); --nav:62px;
   }
   *{box-sizing:border-box}
+  [hidden]{display:none!important}
   html,body{margin:0}
   body{
-    font-family:var(--sans); color:var(--ink); background-color:var(--paper);
+    font-family:var(--sans);color:var(--ink);background-color:var(--paper);
     background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
-    background-size:20px 20px;
-    padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 24px) env(safe-area-inset-left);
-    -webkit-text-size-adjust:100%;
+    background-size:20px 20px;-webkit-text-size-adjust:100%;
+    padding-bottom:calc(var(--nav) + env(safe-area-inset-bottom) + 18px);
   }
-  .wrap{max-width:760px;margin:0 auto;padding:16px 14px 0 26px;position:relative}
-  .wrap::before{content:"";position:absolute;left:12px;top:0;bottom:0;width:2px;background:var(--margin);opacity:.55}
-  header h1{font-size:22px;margin:6px 0 2px;letter-spacing:-.01em}
-  header p{margin:0 0 14px;color:var(--muted);font-size:14px}
-  .card{background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;box-shadow:0 1px 0 rgba(27,42,74,.05)}
-  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px;font-weight:600}
+  .top{position:sticky;top:0;z-index:20;background:rgba(245,241,230,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top) + 8px) 14px 8px}
+  .top .bar{max-width:760px;margin:0 auto;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .top h1{font-size:18px;margin:0;letter-spacing:-.01em}
+  .top .sub{font-size:13px;color:var(--muted)}
+  .otabs{max-width:760px;margin:8px auto 0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .otabs::-webkit-scrollbar{display:none}
+  .otab{flex:0 0 auto;font-family:var(--mono);font-weight:700;font-size:15px;min-height:38px;min-width:52px;padding:0 12px;border-radius:99px;
+    border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;position:relative;touch-action:manipulation}
+  .otab[aria-selected=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .otab.err::after{content:"";position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--err)}
+  .otab.add{font-family:var(--sans);font-weight:600;color:var(--accent);border-style:dashed}
+  main{max-width:760px;margin:0 auto;padding:14px 12px 0}
+  .card{background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 0 rgba(27,42,74,.05)}
+  .card h2,.card>summary{font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px;font-weight:700}
+  details.card>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:28px;margin:0}
+  details.card>summary::-webkit-details-marker{display:none}
+  details.card>summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin-right:4px;transition:transform .15s}
+  details.card[open]>summary{margin-bottom:12px}
+  details.card[open]>summary::after{transform:rotate(-135deg)}
+  .sumhint{font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted);font-size:12.5px;margin-left:6px}
   label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
-  label:first-of-type{margin-top:0}
+  .first{margin-top:0}
   .hint{font-weight:400;color:var(--muted)}
-  input[type=text],select{
-    width:100%;font-family:var(--mono);font-size:17px;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;
-    background:#fff;color:var(--ink);outline:none;-webkit-appearance:none;appearance:none
-  }
-  select{font-family:var(--sans);font-size:16px;background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
-  input[type=text]:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(31,111,209,.15)}
+  input[type=text],select,textarea{width:100%;font-family:var(--mono);font-size:16.5px;padding:10px 12px;border:1.5px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);outline:none;-webkit-appearance:none;appearance:none}
+  textarea{font-family:var(--sans);font-size:15.5px;min-height:110px;resize:vertical;line-height:1.45}
+  textarea.mono{font-family:var(--mono);font-size:13.5px}
+  select{font-family:var(--sans);font-size:16px;padding-right:32px;background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(31,111,209,.15)}
   input.bad{border-color:var(--err)}
-  .row{display:flex;gap:10px}
-  .row>*{flex:1;min-width:0}
+  .row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
   .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:10px}
-  .keys button,.btn,.seg button,.chip{
-    font-family:var(--mono);font-size:17px;min-height:44px;border-radius:8px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;
-    touch-action:manipulation;-webkit-tap-highlight-color:transparent
-  }
-  .keys button:active,.btn:active{background:#eef3fb}
-  .keys .wide{font-family:var(--sans);font-size:14px}
-  button:focus-visible,.cell:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-  .msg{font-size:14px;margin-top:10px;padding:9px 11px;border-radius:8px;display:none}
-  .msg.err{display:block;background:#fdecea;color:var(--err)}
-  .msg.warn{display:block;background:#fff6e0;color:#8a5a00}
-  .msg button{font:inherit;color:inherit;text-decoration:underline;background:none;border:0;padding:0;cursor:pointer}
-  details summary{cursor:pointer;font-size:14px;color:var(--accent);margin-top:10px;min-height:32px;display:flex;align-items:center}
-  details ul{margin:6px 0 0;padding-left:18px;font-size:14px;line-height:1.55}
+  button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .keys button{font-family:var(--mono);font-size:17px;min-height:42px;border-radius:9px;border:1.5px solid var(--line);background:#fff;cursor:pointer}
+  .keys button:active,.btn:active,.cell:active,.tcell:active{background:#e9f0fb}
+  .btn{font-family:var(--sans);font-size:14px;font-weight:600;min-height:42px;padding:0 14px;border-radius:9px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--accent);padding:0 6px}
+  .btn.danger{color:var(--err)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .msg{font-size:14px;margin:0 0 12px;padding:10px 12px;border-radius:9px}
+  .msg.err{background:#fdecea;color:var(--err)}
+  .msg.warn{background:#fff6e0;color:#7a5200}
+  .msg.info{background:#eaf2fd;color:#174a8c}
+  .help{font-size:14px;line-height:1.55;margin:0;padding-left:18px}
   code{font-family:var(--mono);background:#eef1f6;padding:1px 5px;border-radius:4px;font-size:.92em}
-
+  .seg{display:flex;gap:6px;margin:0 0 12px}
+  .seg button{flex:1;font-size:14px;font-weight:600;min-height:40px;border-radius:9px;border:1.5px solid var(--line);background:#fff;cursor:pointer}
+  .seg button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
   /* K-map */
-  .kwrap{display:flex;justify-content:center;overflow-x:auto;padding:4px 0 2px}
+  .kwrap{display:flex;justify-content:center;overflow-x:auto;padding:2px 0}
   .kmap{display:grid;position:relative;user-select:none;-webkit-user-select:none}
   .corner{position:relative;font-family:var(--mono);font-size:13px;font-weight:700}
   .corner svg{position:absolute;inset:0;width:100%;height:100%}
-  .corner .r{position:absolute;right:6px;top:4px}
-  .corner .l{position:absolute;left:4px;bottom:4px}
-  .hd{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:14px;color:var(--ink)}
-  .cell{
-    width:var(--cell);height:var(--cell);border:0;border-right:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);
-    background:#fff;font-family:var(--mono);font-size:22px;font-weight:700;color:var(--ink);padding:0;position:relative;cursor:pointer;
-    touch-action:manipulation;-webkit-tap-highlight-color:transparent
-  }
+  .corner .r{position:absolute;right:6px;top:3px}.corner .l{position:absolute;left:4px;bottom:3px}
+  .hd{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:14px}
+  .cell{width:var(--cell);height:var(--cell);border:0;border-right:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);background:#fff;font-family:var(--mono);font-size:22px;font-weight:700;color:var(--ink);padding:0;position:relative;cursor:pointer}
   .cell .m{position:absolute;left:4px;bottom:2px;font-size:10px;font-weight:400;color:#9aa1b1}
-  .cell.v0{color:#8a93a6;font-weight:400}
-  .cell.vX{color:#9aa1b1;font-weight:400;font-style:italic}
-  .cell.top{border-top:1.5px solid var(--ink)} .cell.left{border-left:1.5px solid var(--ink)}
-  .cell:active{background:#eef3fb}
+  .cell.v0,.tcell.v0{color:#8a93a6;font-weight:400}
+  .cell.vX,.tcell.vX{color:#9aa1b1;font-weight:400;font-style:italic}
+  .cell.top{border-top:1.5px solid var(--ink)}.cell.left{border-left:1.5px solid var(--ink)}
   .loops{pointer-events:none;overflow:visible}
-  .loops rect{fill:none;stroke-width:3.2;vector-effect:non-scaling-stroke;animation:fade .25s ease-out}
-  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .loops rect{fill:none;stroke-width:3.2;vector-effect:non-scaling-stroke}
   .tapnote{text-align:center;font-size:12.5px;color:var(--muted);margin-top:8px}
-
-  .seg{display:flex;gap:6px;margin:4px 0 12px}
-  .seg button{flex:1;font-family:var(--sans);font-size:14px;font-weight:600}
-  .seg button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
-
-  .res{border:1.5px solid var(--line);border-radius:9px;padding:11px 12px;margin-bottom:10px;background:#fff}
-  .res.active{border-color:var(--ink)}
-  .res .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
-  .res .kind{font-size:12.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .groups{font-size:13.5px;line-height:1.65;margin-top:10px}
+  .sw{display:inline-block;width:12px;height:12px;border:3px solid;border-radius:4px;vertical-align:-1px;margin-right:6px}
+  .ov{text-decoration:overline;text-decoration-thickness:1.5px}
+  /* results */
+  .res{border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:10px;background:#fff}
+  .res.active{border-color:var(--ink);box-shadow:inset 3px 0 0 var(--ink)}
+  .res .head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+  .res .kind{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
   .badge{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:99px;background:#e7f5ec;color:var(--ok)}
   .badge.tie{background:#eef1f6;color:var(--muted)}
-  .formula{font-family:var(--mono);font-size:20px;line-height:1.7;word-break:break-word}
-  .ov{text-decoration:overline;text-decoration-thickness:1.5px}
-  .meta{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .formula{font-family:var(--mono);font-size:19px;line-height:1.7;word-break:break-word}
+  .meta{font-size:12.5px;color:var(--muted);margin-top:2px}
   .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-  .chip{font-size:13px;min-height:34px;padding:0 10px;font-family:var(--sans)}
+  .chip{font-size:13px;min-height:34px;padding:0 11px;border-radius:99px;border:1.5px solid var(--line);background:#fff;cursor:pointer}
   .chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  .btn{font-family:var(--sans);font-size:14px;font-weight:600;padding:0 14px}
-  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .groups{font-size:13.5px;line-height:1.6;margin-top:8px}
-  .groups .sw{display:inline-block;width:12px;height:12px;border:3px solid;border-radius:4px;vertical-align:-1px;margin-right:6px}
-
-  table.tt{border-collapse:collapse;font-family:var(--mono);font-size:15px;margin:0 auto}
-  table.tt th,table.tt td{border:1px solid var(--line);padding:5px 10px;text-align:center}
-  table.tt th{background:#eef1f6;font-weight:700}
-  table.tt td.m{color:#9aa1b1;font-size:12px}
-  table.tt td.f1{font-weight:700} table.tt td.f0{color:#8a93a6} table.tt td.fX{color:#9aa1b1;font-style:italic}
-  .ttwrap{overflow-x:auto}
-  .sets{font-family:var(--mono);font-size:14px;line-height:1.7;word-break:break-word}
-  .ld{overflow-x:auto}
-  .ld svg{display:block;margin:0 auto;max-width:100%;height:auto}
-  .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;font-size:14px;opacity:0;transition:.2s;pointer-events:none}
+  /* steps */
+  .step h3{font-size:13.5px;margin:12px 0 6px}
+  .step:first-child h3{margin-top:0}
+  .pi{display:flex;justify-content:space-between;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line);font-size:14px}
+  .pi .t{font-family:var(--mono);font-size:15px}
+  .pi .c{color:var(--muted);font-size:12.5px;flex:1;text-align:right}
+  .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap}
+  .tag.e{background:#e7f5ec;color:var(--ok)}.tag.s{background:#eaf2fd;color:#174a8c}.tag.n{background:#f0f1f4;color:var(--muted)}
+  /* tables */
+  .ttwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
+  table.tt{border-collapse:collapse;font-family:var(--mono);font-size:14.5px;margin:0 auto}
+  table.tt th,table.tt td{border:1px solid var(--line);padding:0;text-align:center;height:38px;min-width:30px}
+  table.tt th{background:#eef1f6;font-weight:700;padding:0 6px;position:sticky;top:0}
+  table.tt td.m{color:#9aa1b1;font-size:11.5px;padding:0 4px}
+  table.tt td.op{font-family:var(--sans);font-size:11.5px;line-height:1.25;color:var(--muted);padding:2px 7px;white-space:nowrap;text-align:left}
+  table.tt td.op b{color:var(--err)}
+  table.tt tr.fault td{background:var(--fault)}
+  .tcell{width:100%;height:38px;border:0;background:transparent;font-family:var(--mono);font-size:15px;font-weight:700;cursor:pointer;min-width:38px}
+  .faultbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 12px;font-size:13.5px}
+  .faultbar select{width:auto;min-width:92px;font-size:15px;padding:8px 30px 8px 10px}
+  .faultbar .btn{min-height:38px;padding:0 12px;font-family:var(--mono)}
+  .descrow{display:grid;grid-template-columns:auto 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px}
+  .descrow .vv{font-family:var(--mono);font-weight:700;padding:0 4px}
+  .descrow select,.descrow input{font-size:15px;padding:9px 10px}
+  pre.code{background:#16213a;color:#e6ebf5;font-family:var(--mono);font-size:12.5px;line-height:1.55;padding:12px;border-radius:10px;overflow-x:auto;margin:0;white-space:pre}
+  .ld{overflow-x:auto}.ld svg{display:block;margin:0 auto;max-width:100%;height:auto}
+  .preset{border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:9px;background:#fff}
+  .preset h3{margin:0 0 3px;font-size:15px}
+  .preset p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.45}
+  .preset .note{color:#7a5200;margin-top:4px}
+  .preset .btn{margin-top:8px}
+  .small{font-size:13px;color:var(--muted);line-height:1.5}
+  ol.steps{margin:6px 0 0;padding-left:20px;font-size:14px;line-height:1.55}
+  .empty{color:var(--muted);font-size:14px;text-align:center;padding:12px}
+  /* bottom nav */
+  .nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,253,247,.97);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  .nav .in{max-width:760px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+  .nav button{height:var(--nav);border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer}
+  .nav button svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .nav button[aria-current=page]{color:var(--ink)}
+  .nav button[aria-current=page] svg{stroke-width:2.3}
+  .toast{position:fixed;left:50%;bottom:calc(var(--nav) + env(safe-area-inset-bottom) + 14px);transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:40;display:flex;gap:12px;align-items:center;max-width:calc(100% - 24px)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  .empty{color:var(--muted);font-size:14px;text-align:center;padding:10px}
-  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  .toast.act{pointer-events:auto}
+  .toast button{background:none;border:0;color:#9cc3ff;font-weight:700;cursor:pointer;padding:4px 0}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>Karnaugh na szybko</h1>
-    <p>Wpisz wzór albo numery kratek, a dostaniesz tabelę prawdy, tablicę z pętlami, postać minimalną i drabinkę LD.</p>
-  </header>
+<header class="top">
+  <div class="bar"><h1>Karnaugh na szybko</h1><span class="sub" id="viewTitle">Funkcja</span></div>
+  <nav class="otabs" id="otabs" role="tablist" aria-label="Wyjścia"></nav>
+</header>
 
-  <section class="card" aria-labelledby="h-in">
-    <h2 id="h-in">Funkcja</h2>
-    <div class="row">
-      <div style="flex:0 0 34%">
-        <label for="fname">Nazwa</label>
-        <input id="fname" type="text" value="Z1" autocomplete="off" autocapitalize="off" spellcheck="false">
+<main>
+  <!-- ============ FUNKCJA ============ -->
+  <section id="v-fn" aria-label="Funkcja">
+    <div id="fnMsg" class="msg" hidden role="status" aria-live="polite"></div>
+
+    <div class="card">
+      <h2>Wejście</h2>
+      <div class="row">
+        <div style="flex:0 0 32%"><label class="first" for="fname">Nazwa</label>
+          <input id="fname" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+        <div><label class="first" for="fexpr">Jedynki <span class="hint">– wzór lub kratki</span></label>
+          <input id="fexpr" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="np. a'b + c'd  lub  0,2,8"></div>
       </div>
-      <div>
-        <label for="preset">Przykład</label>
-        <select id="preset">
-          <option value="">— wybierz —</option>
-          <option value="z1">Lab03 z.4 – Z1</option>
-          <option value="z2">Lab03 z.4 – Z2</option>
-          <option value="z3">Lab03 z.4 – Z3</option>
-          <option value="z4">Lab03 z.4 – Z4</option>
-          <option value="f1">Wzór: a'b + c'd</option>
-          <option value="f2">Wzór: (a+b)·¬c + a·d</option>
-          <option value="f3">XOR 3 zmiennych</option>
-        </select>
+      <label for="xexpr">Stany nieokreślone X <span class="hint">– opcjonalnie</span></label>
+      <input id="xexpr" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="np. ~a·b + ~c·d  lub  1,4,5">
+      <div class="keys" role="group" aria-label="Szybkie znaki">
+        <button type="button" data-k="a">a</button><button type="button" data-k="b">b</button>
+        <button type="button" data-k="c">c</button><button type="button" data-k="d">d</button>
+        <button type="button" data-k="¬" aria-label="negacja">¬</button><button type="button" data-k="'" aria-label="negacja po zmiennej">'</button>
+        <button type="button" data-k="·" aria-label="iloczyn">·</button><button type="button" data-k=" + " aria-label="suma">+</button>
+        <button type="button" data-k="(">(</button><button type="button" data-k=")">)</button>
+        <button type="button" data-k="," aria-label="przecinek">,</button><button type="button" data-k="BS" aria-label="usuń znak">⌫</button>
+      </div>
+      <details style="margin-top:10px">
+        <summary class="small" style="cursor:pointer;min-height:30px;color:var(--accent)">Zmienne i składnia</summary>
+        <div class="row" style="margin-top:8px">
+          <div><label class="first" for="nvars">Liczba zmiennych</label>
+            <select id="nvars"><option value="auto">auto</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+          <div><label class="first" for="vorder">Kolejność</label>
+            <input id="vorder" type="text" placeholder="abcd" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+        </div>
+        <p class="small" style="margin:6px 0 8px">Ustawienia zmiennych są wspólne dla wszystkich wyjść.</p>
+        <ul class="help">
+          <li>Negacja: <code>¬a</code>, <code>~a</code>, <code>!a</code>, <code>a'</code></li>
+          <li>Iloczyn: <code>a·b</code>, <code>a*b</code>, <code>ab</code>. Suma: <code>a+b</code>. XOR: <code>a^b</code></li>
+          <li>Kratki: <code>0,2,8</code> lub <code>m(0,2,8)</code>. Pierwsza zmienna to najstarszy bit (kratka 8 = a1 b0 c0 d0)</li>
+        </ul>
+      </details>
+      <div class="actions" style="justify-content:flex-end;margin-top:6px">
+        <button type="button" class="btn ghost danger" id="delOut">Usuń to wyjście</button>
       </div>
     </div>
 
-    <label for="fexpr">Jedynki funkcji <span class="hint">– wzór albo lista kratek, np. <code>0,2,8</code></span></label>
-    <input id="fexpr" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-describedby="fmsg">
-
-    <label for="xexpr">Stany nieokreślone X <span class="hint">– opcjonalnie, wzór albo lista</span></label>
-    <input id="xexpr" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="np. ~a·b + ~c·d  lub  1,4,5">
-
-    <div class="row">
-      <div>
-        <label for="nvars">Liczba zmiennych</label>
-        <select id="nvars">
-          <option value="auto">auto</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
-        </select>
+    <div class="card" id="kcard">
+      <h2>Tablica Karnaugha</h2>
+      <div class="seg" role="group" aria-label="Co sklejać">
+        <button type="button" id="segSop" aria-pressed="true">Sklejanie jedynek</button>
+        <button type="button" id="segPos" aria-pressed="false">Sklejanie zer</button>
       </div>
-      <div>
-        <label for="vorder">Kolejność <span class="hint">(opcjonalnie)</span></label>
-        <input id="vorder" type="text" placeholder="abcd" autocomplete="off" autocapitalize="off" spellcheck="false">
-      </div>
+      <div class="kwrap"><div id="kmap" class="kmap"></div></div>
+      <div class="tapnote">Stuknij w kratkę: 0 → 1 → X</div>
+      <div id="groups" class="groups"></div>
     </div>
 
-    <div class="keys" role="group" aria-label="Szybkie znaki">
-      <button type="button" data-k="a">a</button><button type="button" data-k="b">b</button>
-      <button type="button" data-k="c">c</button><button type="button" data-k="d">d</button>
-      <button type="button" data-k="¬" aria-label="negacja">¬</button><button type="button" data-k="'" aria-label="negacja po zmiennej">'</button>
-      <button type="button" data-k="·" aria-label="iloczyn">·</button><button type="button" data-k=" + " aria-label="suma">+</button>
-      <button type="button" data-k="(">(</button><button type="button" data-k=")">)</button>
-      <button type="button" data-k="," aria-label="przecinek">,</button><button type="button" class="wide" data-k="BS" aria-label="usuń znak">⌫</button>
+    <div class="card" id="rcard">
+      <h2>Postać minimalna</h2>
+      <div id="results"></div>
     </div>
 
-    <div id="fmsg" class="msg" role="status" aria-live="polite"></div>
+    <details class="card" id="ldcard">
+      <summary>Drabinka LD <span class="sumhint" id="ldform"></span></summary>
+      <div id="ld" class="ld"></div>
+    </details>
 
-    <details>
-      <summary>Jak wpisywać?</summary>
-      <ul>
-        <li>Negacja: <code>¬a</code>, <code>~a</code>, <code>!a</code> albo <code>a'</code></li>
-        <li>Iloczyn: <code>a·b</code>, <code>a*b</code>, <code>a&amp;b</code> albo po prostu <code>ab</code></li>
-        <li>Suma: <code>a+b</code> lub <code>a|b</code>. XOR: <code>a^b</code>. Do tego nawiasy, <code>0</code> i <code>1</code></li>
-        <li>Lista kratek: <code>0,2,8</code> lub <code>m(0,2,8)</code>. Pierwsza zmienna to najstarszy bit, czyli kratka 8 to a=1, b=0, c=0, d=0</li>
-        <li>Stuknięcie w kratkę tablicy przełącza jej wartość: 0 → 1 → X → 0</li>
-      </ul>
+    <details class="card" id="stcard">
+      <summary>Kroki sklejania <span class="sumhint">do sprawdzenia ręcznego rozwiązania</span></summary>
+      <div id="steps"></div>
     </details>
   </section>
 
-  <section class="card" aria-labelledby="h-k">
-    <h2 id="h-k">Tablica Karnaugha</h2>
-    <div class="seg" role="group" aria-label="Co zaznaczać pętlami">
-      <button type="button" id="segSop" aria-pressed="true">Sklejanie jedynek</button>
-      <button type="button" id="segPos" aria-pressed="false">Sklejanie zer</button>
+  <!-- ============ TABELA ============ -->
+  <section id="v-tt" aria-label="Tabela prawdy" hidden>
+    <div id="ttMsg" class="msg" hidden></div>
+    <details class="card" id="desccard">
+      <summary>Opis stanów czujników <span class="sumhint" id="descsum"></span></summary>
+      <div id="descbox"></div>
+    </details>
+    <div class="card">
+      <h2>Tabela prawdy – wszystkie wyjścia</h2>
+      <div id="faultbar" class="faultbar" hidden></div>
+      <div class="ttwrap"><table class="tt" id="tt"></table></div>
+      <p class="tapnote">Stuknij w wartość wyjścia, żeby ją zmienić. Wiersze awarii są podświetlone.</p>
+      <div class="actions"><button type="button" class="btn" id="copySets">Kopiuj zapis Σm</button></div>
     </div>
-    <div class="kwrap"><div id="kmap" class="kmap" aria-label="Tablica Karnaugha"></div></div>
-    <div class="tapnote">Stuknij w kratkę, żeby zmienić wartość (0 → 1 → X)</div>
-    <div id="groups" class="groups"></div>
   </section>
 
-  <section class="card" aria-labelledby="h-r">
-    <h2 id="h-r">Postać minimalna</h2>
-    <div id="results"></div>
+  <!-- ============ KOD / EKSPORT ============ -->
+  <section id="v-code" aria-label="Kod i eksport" hidden>
+    <div class="card">
+      <h2>Kod dla sterownika</h2>
+      <div class="seg" role="group" aria-label="Język">
+        <button type="button" data-lang="tia" aria-pressed="true">SCL (TIA)</button>
+        <button type="button" data-lang="st" aria-pressed="false">ST</button>
+        <button type="button" data-lang="vhdl" aria-pressed="false">VHDL</button>
+      </div>
+      <pre class="code" id="code"></pre>
+      <p class="small">Każde wyjście zapisane jest w postaci wybranej w zakładce Funkcja (jedynki lub zera, wybrany wariant).</p>
+      <div class="actions"><button type="button" class="btn primary" id="copyCode">Kopiuj kod</button></div>
+    </div>
+    <div class="card">
+      <h2>Obrazki do sprawozdania</h2>
+      <label class="first" for="imgOut">Wyjście</label>
+      <select id="imgOut"></select>
+      <div class="actions">
+        <button type="button" class="btn primary" data-img="kpng">Tablica PNG</button>
+        <button type="button" class="btn" data-img="ksvg">Tablica SVG</button>
+        <button type="button" class="btn" data-img="ldpng">Drabinka LD PNG</button>
+      </div>
+      <p class="small">Na iPhonie otworzy się menu udostępniania, z którego zapiszesz obraz w Zdjęciach lub Plikach.</p>
+    </div>
+    <details class="card">
+      <summary>LaTeX <span class="sumhint">tabela prawdy i wzory</span></summary>
+      <pre class="code" id="latex"></pre>
+      <div class="actions"><button type="button" class="btn" id="copyLatex">Kopiuj LaTeX</button></div>
+    </details>
   </section>
 
-  <section class="card" aria-labelledby="h-ld">
-    <h2 id="h-ld">Drabinka LD <span class="hint" style="text-transform:none;letter-spacing:0" id="ldform"></span></h2>
-    <div id="ld" class="ld"></div>
+  <!-- ============ ZADANIE ============ -->
+  <section id="v-task" aria-label="Zadanie" hidden>
+    <details class="card" open>
+      <summary>Zestawy z lab03</summary>
+      <p class="small" style="margin:0 0 10px">Wczytuje wszystkie wyjścia zestawu naraz. Zestaw 4 jest sprawdzony w sprawozdaniu. Pozostałe rozpisałem z treści PDF, więc porównaj je z własnym rozwiązaniem, zwłaszcza miejsca oznaczone jako interpretacja.</p>
+      <div id="presets"></div>
+    </details>
+    <details class="card">
+      <summary>Zadanie tekstowe przez AI</summary>
+      <ol class="steps">
+        <li>Wklej treść zadania i skopiuj gotowy prompt.</li>
+        <li>Wklej prompt do NOVA albo innego czatu AI.</li>
+        <li>Odpowiedź (JSON) wklej w pole niżej i kliknij Wczytaj.</li>
+      </ol>
+      <label for="taskText">Treść zadania</label>
+      <textarea id="taskText" placeholder="Wklej opis układu i reguły sterowania…"></textarea>
+      <div class="actions"><button type="button" class="btn primary" id="copyPrompt">Kopiuj prompt dla AI</button></div>
+      <label for="jsonIn">Odpowiedź AI albo projekt (JSON)</label>
+      <textarea id="jsonIn" class="mono" placeholder='{"vars":"abcd","outputs":[{"name":"Z1","f":"0,2,8","x":"1,4,5"}]}'></textarea>
+      <div class="actions"><button type="button" class="btn primary" id="importJson">Wczytaj</button></div>
+      <div id="aiNote" class="msg info" hidden style="margin-top:10px"></div>
+      <p class="small" style="margin-top:10px">AI nie jest wbudowane w stronę celowo. Klucz API wpisany w publicznej stronie na GitHub Pages mógłby wyciec, a model uruchamiany w przeglądarce jest na iPhonie za ciężki. AI potrafi się pomylić, więc zawsze sprawdź tabelę prawdy w zakładce Tabela.</p>
+    </details>
+    <details class="card">
+      <summary>Projekt <span class="sumhint">zapis i odczyt</span></summary>
+      <p class="small" style="margin:0 0 8px">Strona niczego nie zapamiętuje po zamknięciu. Skopiuj projekt albo pobierz plik, a potem wczytaj go polem JSON powyżej lub z pliku.</p>
+      <div class="actions">
+        <button type="button" class="btn" id="copyProject">Kopiuj projekt</button>
+        <button type="button" class="btn" id="saveProject">Pobierz .json</button>
+        <label class="btn" style="display:inline-flex;align-items:center;margin:0;font-weight:600">Wczytaj plik<input type="file" id="fileIn" accept=".json,application/json,text/plain" hidden></label>
+      </div>
+    </details>
   </section>
+</main>
 
-  <section class="card" aria-labelledby="h-t">
-    <h2 id="h-t">Tabela prawdy</h2>
-    <div id="sets" class="sets"></div>
-    <div class="actions"><button type="button" class="btn" id="copySets">Kopiuj zapis kratek</button></div>
-    <div class="ttwrap" style="margin-top:12px"><table class="tt" id="tt"></table></div>
-  </section>
-</div>
+<nav class="nav" aria-label="Widoki">
+  <div class="in">
+    <button type="button" data-view="fn" aria-current="page"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/><rect x="11.5" y="11.5" width="7" height="7" rx="2"/></svg>Funkcja</button>
+    <button type="button" data-view="tt"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 10h16M4 15h16M4 20h16M9 5v15"/></svg>Tabela</button>
+    <button type="button" data-view="code"><svg viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 5l-3 14"/></svg>Kod</button>
+    <button type="button" data-view="task"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>Zadanie</button>
+  </div>
+</nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 (() => {
+  'use strict';
   const $ = s => document.querySelector(s);
   const GRAY = {1:['0','1'], 2:['00','01','11','10']};
   const COLORS = ['#d1342b','#1f6fd1','#1f9a5a','#c47a00','#8a3fd1','#0f9aa6','#d1307f','#5b6b00'];
-  const PRESETS = {
-    z1:{name:'Z1', f:'0,2,8', x:'~a·b + ~c·d', n:'4'},
-    z2:{name:'Z2', f:'3,12', x:'~a·b + ~c·d', n:'4'},
-    z3:{name:'Z3', f:'10,11,14', x:'~a·b + ~c·d', n:'4'},
-    z4:{name:'Z4', f:'~a·b + ~c·d', x:'', n:'4'},
-    f1:{name:'F', f:"a'b + c'd", x:'', n:'auto'},
-    f2:{name:'F', f:'(a+b)·¬c + a·d', x:'', n:'auto'},
-    f3:{name:'F', f:'a^b^c', x:'', n:'auto'}
+  const LETTERS = 'abcdefghijklmnopqrstuvwxyz';
+  const DESC = {
+    level:{name:'poziom', short:{'00':'nis','10':'śr','11':'wys'}, long:{'00':'niski','10':'średni','11':'wysoki'}},
+    temp:{name:'temperatura', short:{'00':'zim','10':'let','11':'gor'}, long:{'00':'zimna','10':'letnia','11':'gorąca'}}
   };
-  const S = { vars:['a','b','c','d'], vals:[], manual:false, mode:'sop', variant:{sop:0,pos:0}, res:null, lastInput:null };
+  const SENS = {p1:{type:'none',label:'Poziom'}, p2:{type:'none',label:'Temp.'}};
+  const PRESETS = [
+    {id:'s1', title:'Zestaw 1 – mieszalnik', text:'Z1 woda zimna, Z2 gorąca, Z3 i Z4 wypływ. ab – poziom, cd – temperatura.',
+     desc:{p1:{type:'level',label:'Poziom'},p2:{type:'temp',label:'Temp.'}},
+     outs:[['Z1','0,2,3,10,11',''],['Z2','0,2,3,8,10',''],['Z3','10,14','1,4,5,6,7,9,13'],['Z4','12,15','1,4,5,6,7,9,13']]},
+    {id:'s2', title:'Zestaw 2 – podgrzewacz z alarmem', text:'Z1 dopływ, Z2 odpływ, Z3 grzałka, Z4 alarm. ab – poziom, cd – temperatura.',
+     note:'Interpretacja: przy awarii obu par czujników obowiązują reguły awarii czujników poziomu (Z1 = 0, Z2 = 1).',
+     desc:{p1:{type:'level',label:'Poziom'},p2:{type:'temp',label:'Temp.'}},
+     outs:[['Z1','0,2,3,8,10,11','1,9,13'],['Z2','4,5,6,7,14,15','1,9,13'],['Z3','0,2,8,10,12,14',''],['Z4','1,4,5,6,7,9,13','']]},
+    {id:'s3', title:'Zestaw 3 – silosy', text:'Z1 przenośnik P1, Z2 przenośnik P2, Z3 i Z4 klapy. a, b – materiał na P1/P2, c, d – silos S1/S2 pełny.',
+     note:'Interpretacja: P2 pracuje tylko wtedy, gdy na P1 nie ma materiału (a = 0).',
+     desc:{p1:{type:'none',label:''},p2:{type:'none',label:''}},
+     outs:[['Z1','8,9,10,11,12,13,14,15',''],['Z2','4,5,6',''],['Z3','11,15','0,1,2,3,4,5,6,7'],['Z4','4,5,8,9,12,13','0,1,2,3,7,11,15']]},
+    {id:'s4', title:'Zestaw 4 – pompa, 3 prędkości', text:'Z1 n1, Z2 n2, Z3 n3, Z4 alarm. ab – zbiornik I, cd – zbiornik II.',
+     desc:{p1:{type:'level',label:'Zb. I'},p2:{type:'level',label:'Zb. II'}},
+     outs:[['Z1','0,2,8','1,4,5,6,7,9,13'],['Z2','3,12','1,4,5,6,7,9,13'],['Z3','10,11,14','1,4,5,6,7,9,13'],['Z4','1,4,5,6,7,9,13','']]},
+    {id:'s5', title:'Zestaw 5 – dwa zbiorniki, dwie pompy', text:'Z1, Z2 zawory dopływu, Z3 pompa duża, Z4 pompa mała. ab – zbiornik I, cd – zbiornik II.',
+     desc:{p1:{type:'level',label:'Zb. I'},p2:{type:'level',label:'Zb. II'}},
+     outs:[['Z1','0,2,3,8,10,11',''],['Z2','0,2,8,10,12,14',''],['Z3','0,2,3,8,12','1,4,5,6,7,9,13'],['Z4','0,10,11,14','1,4,5,6,7,9,13']]},
+    {id:'s6', title:'Zestaw 6 – sortowanie detali', text:'Z1 przenośnik, Z2 i Z3 ramię, Z4 alarm. a, b, c – czujniki długości, d – przełącznik.',
+     note:'Interpretacja: bez awarii przenośnik pracuje (Z1 = 1), bo treść każe go zatrzymać tylko przy awarii.',
+     desc:{p1:{type:'none',label:''},p2:{type:'none',label:''}},
+     outs:[['Z1','0,1,2,3,4,5,6,7,8,9,12,13,14,15',''],['Z2','12,13,15',''],['Z3','8,9,14,15',''],['Z4','10,11','']]}
+  ];
 
-  /* ---------- parser ---------- */
+  const P = { outputs:[], nvars:'auto', order:'', desc:JSON.parse(JSON.stringify(SENS)), cur:0, view:'fn', lang:'tia' };
+  let D = { vars:['a','b','c','d'], outs:[], err:null };
+  const newOut = (name, f='', x='') => ({name, f, x, mode:null, variant:{sop:0,pos:0}});
+
+  /* ================= parser ================= */
   function tokenize(src){
     const s = src.normalize('NFD'); const t = []; let i = 0;
     while (i < s.length){
       const ch = s[i];
       if (/\s/.test(ch)) { i++; continue; }
-      if (/[a-zA-Z]/.test(ch)) { t.push({k:'v', v:ch.toLowerCase(), p:i}); i++; continue; }
-      if (ch === '0' || ch === '1') { t.push({k:'c', v:+ch, p:i}); i++; continue; }
-      if ('+|∨'.includes(ch)) { t.push({k:'or', p:i}); i++; continue; }
-      if ('·*&∧⋅.•'.includes(ch)) { t.push({k:'and', p:i}); i++; continue; }
-      if ('^⊕'.includes(ch)) { t.push({k:'xor', p:i}); i++; continue; }
-      if ('!~¬'.includes(ch)) { t.push({k:'not', p:i}); i++; continue; }
-      if ("'’′\u0304\u0305".includes(ch)) { t.push({k:'post', p:i}); i++; continue; }
-      if (ch === '(' || ch === ')') { t.push({k:ch, p:i}); i++; continue; }
+      if (/[a-zA-Z]/.test(ch)) { t.push({k:'v', v:ch.toLowerCase()}); i++; continue; }
+      if (ch === '0' || ch === '1') { t.push({k:'c', v:+ch}); i++; continue; }
+      if ('+|∨'.includes(ch)) { t.push({k:'or'}); i++; continue; }
+      if ('·*&∧⋅.•'.includes(ch)) { t.push({k:'and'}); i++; continue; }
+      if ('^⊕'.includes(ch)) { t.push({k:'xor'}); i++; continue; }
+      if ('!~¬'.includes(ch)) { t.push({k:'not'}); i++; continue; }
+      if ("'’′\u0304\u0305".includes(ch)) { t.push({k:'post'}); i++; continue; }
+      if (ch === '(' || ch === ')') { t.push({k:ch}); i++; continue; }
       throw new Error(`Nieznany znak „${ch}”`);
     }
     return t;
@@ -259,103 +385,102 @@
     const tk = tokenize(src); let p = 0;
     if (!tk.length) return null;
     const peek = () => tk[p];
-    const expr = () => { let l = xor(); while (peek() && peek().k === 'or'){ p++; l = {t:'or', a:l, b:xor()}; } return l; };
-    const xor = () => { let l = term(); while (peek() && peek().k === 'xor'){ p++; l = {t:'xor', a:l, b:term()}; } return l; };
+    const expr = () => { let l = xor(); while (peek() && peek().k==='or'){ p++; l = {t:'or',a:l,b:xor()}; } return l; };
+    const xor = () => { let l = term(); while (peek() && peek().k==='xor'){ p++; l = {t:'xor',a:l,b:term()}; } return l; };
     const term = () => {
       let l = factor();
-      for(;;){
-        const q = peek(); if (!q) break;
-        if (q.k === 'and'){ p++; l = {t:'and', a:l, b:factor()}; continue; }
-        if (['v','c','(','not'].includes(q.k)){ l = {t:'and', a:l, b:factor()}; continue; }
-        break;
-      }
+      for(;;){ const q = peek(); if (!q) break;
+        if (q.k==='and'){ p++; l = {t:'and',a:l,b:factor()}; continue; }
+        if (['v','c','(','not'].includes(q.k)){ l = {t:'and',a:l,b:factor()}; continue; }
+        break; }
       return l;
     };
     const factor = () => {
       const q = peek(); if (!q) throw new Error('Wzór się urywa, brakuje zmiennej');
-      if (q.k === 'not'){ p++; return {t:'not', a:factor()}; }
+      if (q.k==='not'){ p++; return {t:'not',a:factor()}; }
       let x = primary();
-      while (peek() && peek().k === 'post'){ p++; x = {t:'not', a:x}; }
+      while (peek() && peek().k==='post'){ p++; x = {t:'not',a:x}; }
       return x;
     };
     const primary = () => {
       const q = tk[p++]; if (!q) throw new Error('Wzór się urywa');
-      if (q.k === 'v') return {t:'v', n:q.v};
-      if (q.k === 'c') return {t:'c', v:q.v};
-      if (q.k === '('){ const e = expr(); if (!peek() || peek().k !== ')') throw new Error('Brakuje nawiasu „)”'); p++; return e; }
-      if (q.k === ')') throw new Error('Za dużo nawiasów „)”');
+      if (q.k==='v') return {t:'v',n:q.v};
+      if (q.k==='c') return {t:'c',v:q.v};
+      if (q.k==='('){ const e = expr(); if (!peek() || peek().k!==')') throw new Error('Brakuje nawiasu „)”'); p++; return e; }
+      if (q.k===')') throw new Error('Za dużo nawiasów „)”');
       throw new Error('Operator w złym miejscu, np. dwa „+” obok siebie');
     };
     const e = expr();
-    if (p < tk.length) throw new Error(tk[p].k === ')' ? 'Za dużo nawiasów „)”' : 'Nie rozumiem końcówki wzoru');
+    if (p < tk.length) throw new Error(tk[p].k===')' ? 'Za dużo nawiasów „)”' : 'Nie rozumiem końcówki wzoru');
     return e;
   }
   function varsOf(n, set){ if (!n) return set; if (n.t==='v') set.add(n.n); if (n.a) varsOf(n.a,set); if (n.b) varsOf(n.b,set); return set; }
   function ev(n, env){
-    switch(n.t){
-      case 'v': return env[n.n]; case 'c': return n.v; case 'not': return 1-ev(n.a,env);
-      case 'and': return ev(n.a,env)&ev(n.b,env); case 'or': return ev(n.a,env)|ev(n.b,env); case 'xor': return ev(n.a,env)^ev(n.b,env);
-    }
+    switch(n.t){ case 'v': return env[n.n]; case 'c': return n.v; case 'not': return 1-ev(n.a,env);
+      case 'and': return ev(n.a,env)&ev(n.b,env); case 'or': return ev(n.a,env)|ev(n.b,env); case 'xor': return ev(n.a,env)^ev(n.b,env); }
   }
   const LIST_RE = /^\s*(?:[Σ∑]?\s*m\s*)?\(?\s*\d+(?:\s*[,;]\s*\d+)*\s*\)?\s*$/i;
+  const isList = s => { s = s.trim(); return !!s && LIST_RE.test(s) && (/[,;]/.test(s) || /^[Σ∑m]/i.test(s) || !/^[01]$/.test(s)); };
   function readInput(src){
-    const s = src.trim();
+    const s = (src||'').trim();
     if (!s) return {kind:'empty'};
-    if (LIST_RE.test(s) && (/[,;]/.test(s) || /^[Σ∑m]/i.test(s) || !/^[01]$/.test(s))){
-      const nums = (s.match(/\d+/g)||[]).map(Number);
-      return {kind:'list', nums};
-    }
+    if (isList(s)) return {kind:'list', nums:(s.match(/\d+/g)||[]).map(Number)};
     return {kind:'expr', ast:parse(s)};
   }
 
-  /* ---------- compute values ---------- */
+  /* ================= compute ================= */
   function compute(){
-    const fIn = readInput($('#fexpr').value), xIn = readInput($('#xexpr').value);
-    const found = new Set();
-    [fIn,xIn].forEach(r => { if (r.kind==='expr') varsOf(r.ast, found); });
-    let vars, nSel = $('#nvars').value, order = $('#vorder').value.toLowerCase().replace(/[^a-z]/g,'');
+    const parsed = P.outputs.map(o => {
+      const r = {f:null, x:null, err:null};
+      try { r.f = readInput(o.f); } catch(e){ r.err = 'Jedynki: ' + e.message; }
+      try { r.x = readInput(o.x); } catch(e){ r.err = r.err || ('Stany X: ' + e.message); }
+      return r;
+    });
+    const found = new Set(); let maxIdx = -1;
+    parsed.forEach(r => { if (r.err) return; [r.f, r.x].forEach(q => { if (q.kind==='expr') varsOf(q.ast, found); if (q.kind==='list') maxIdx = Math.max(maxIdx, ...q.nums); }); });
     const foundArr = [...found].sort();
-    const maxIdx = Math.max(-1, ...[fIn,xIn].filter(r=>r.kind==='list').flatMap(r=>r.nums));
-    if (order){
-      vars = [...new Set(order.split(''))];
-      const miss = foundArr.filter(v=>!vars.includes(v));
-      if (miss.length) throw new Error(`Zmienna „${miss.join(', ')}” nie występuje w polu „Kolejność”`);
-    } else {
-      let n;
-      if (nSel !== 'auto') n = +nSel;
-      else if (foundArr.length) n = Math.max(2, foundArr.length, maxIdx>=0 ? Math.max(2,Math.ceil(Math.log2(maxIdx+1))) : 0);
-      else n = maxIdx >= 0 ? Math.max(2, Math.ceil(Math.log2(maxIdx+1))) : 4;
-      if (n > 4 || foundArr.length > 4) throw new Error('Maksymalnie 4 zmienne, bo tablica Karnaugha ma tu 4×4 kratki');
-      if (foundArr.length > n) throw new Error(`Wzór ma ${foundArr.length} zmienne, a wybrano ${n}`);
-      vars = foundArr.slice();
-      for (const c of 'abcdefghijklmnopqrstuvwxyz'){ if (vars.length>=n) break; if (!vars.includes(c)) vars.push(c); }
-      vars.sort();
-    }
-    if (vars.length > 4) throw new Error('Maksymalnie 4 zmienne');
-    if (vars.length < 2) throw new Error('Potrzebne są co najmniej 2 zmienne');
-    const n = vars.length, N = 1<<n;
-    [fIn,xIn].forEach(r => { if (r.kind==='list'){ const bad = r.nums.filter(v=>v>=N); if (bad.length) throw new Error(`Kratka ${bad[0]} nie istnieje, przy ${n} zmiennych są kratki 0–${N-1}`); }});
-    const inSet = (r, m) => {
-      if (r.kind==='empty') return false;
-      if (r.kind==='list') return r.nums.includes(m);
-      const env = {}; vars.forEach((v,i)=> env[v] = (m >> (n-1-i)) & 1);
-      return !!ev(r.ast, env);
-    };
-    const vals = []; let conflicts = 0;
-    for (let m=0; m<N; m++){
-      const f = inSet(fIn,m), x = inSet(xIn,m);
-      if (f && x) conflicts++;
-      vals.push(x ? 'X' : (f ? '1' : '0'));
-    }
-    return {vars, vals, conflicts, empty: fIn.kind==='empty' && xIn.kind==='empty'};
+    let vars, err = null;
+    try {
+      const order = P.order.toLowerCase().replace(/[^a-z]/g,'');
+      if (order){
+        vars = [...new Set(order.split(''))];
+        const miss = foundArr.filter(v => !vars.includes(v));
+        if (miss.length) throw new Error(`Zmiennej „${miss.join(', ')}” nie ma w polu Kolejność`);
+      } else {
+        const fromIdx = maxIdx >= 0 ? Math.max(2, Math.ceil(Math.log2(maxIdx+1))) : 0;
+        let n = P.nvars !== 'auto' ? +P.nvars : Math.max(2, foundArr.length, fromIdx || (foundArr.length ? 0 : 4));
+        if (foundArr.length > 4) throw new Error('Maksymalnie 4 zmienne, bo tablica ma tu 4×4 kratki');
+        if (foundArr.length > n) throw new Error(`Wzory mają ${foundArr.length} zmienne, a wybrano ${n}`);
+        vars = foundArr.slice();
+        for (const c of LETTERS){ if (vars.length >= n) break; if (!vars.includes(c)) vars.push(c); }
+        vars.sort();
+      }
+      if (vars.length > 4) throw new Error('Maksymalnie 4 zmienne');
+      if (vars.length < 2) throw new Error('Potrzebne są co najmniej 2 zmienne');
+    } catch(e){ err = e.message; vars = D.vars; }
+    const n = vars.length, N = 1 << n;
+    const outs = P.outputs.map((o, i) => {
+      const r = parsed[i];
+      if (err) return {err, vals:null};
+      if (r.err) return {err:r.err, vals:null};
+      for (const q of [r.f, r.x]) if (q.kind==='list'){ const bad = q.nums.find(v => v >= N); if (bad !== undefined) return {err:`Kratka ${bad} nie istnieje, przy ${n} zmiennych są kratki 0–${N-1}`, vals:null}; }
+      const inSet = (q, m) => { if (q.kind==='empty') return false; if (q.kind==='list') return q.nums.includes(m);
+        const env = {}; vars.forEach((v,k) => env[v] = (m >> (n-1-k)) & 1); return !!ev(q.ast, env); };
+      const vals = []; let conflicts = 0;
+      for (let m=0; m<N; m++){ const f = inSet(r.f,m), x = inSet(r.x,m); if (f && x) conflicts++; vals.push(x ? 'X' : f ? '1' : '0'); }
+      const res = {sop:minimize(vals,n,'1'), pos:minimize(vals,n,'0')};
+      ['sop','pos'].forEach(k => { if (o.variant[k] >= res[k].sols.length) o.variant[k] = 0; });
+      return {vals, res, conflicts, empty: r.f.kind==='empty' && r.x.kind==='empty'};
+    });
+    D = {vars, outs, err};
   }
 
-  /* ---------- minimization (exact, prime implicants + branch&bound) ---------- */
-  const pc = x => { let c=0; while(x){ c+=x&1; x>>=1; } return c; };
+  /* ================= minimization ================= */
+  const pc = x => { let c=0; while(x){ c += x&1; x >>= 1; } return c; };
   function minimize(vals, n, target){
     const N = 1<<n, full = N-1, ok = [], T = [];
     for (let m=0;m<N;m++){ ok[m] = vals[m]===target || vals[m]==='X'; if (vals[m]===target) T.push(m); }
-    if (!T.length) return {constant:true, value:0, sols:[[]]};
+    if (!T.length) return {constant:true, value:0, sols:[[]], primes:[], T};
     const cubes = [];
     for (let mask=0; mask<=full; mask++){
       for (let v=mask;; v=(v-1)&mask){
@@ -365,33 +490,32 @@
         if (v===0) break;
       }
     }
-    const contains = (o,c) => o!==c && (o.mask & c.mask)===o.mask && (c.val & o.mask)===o.val && o.mask!==c.mask;
+    const contains = (o,c) => o!==c && o.mask!==c.mask && (o.mask & c.mask)===o.mask && (c.val & o.mask)===o.val;
     const primes = cubes.filter(c => !cubes.some(o => contains(o,c))).filter(p => p.cells.some(m => vals[m]===target));
     const whole = primes.find(p => p.mask===0);
-    if (whole) return {constant:true, value:1, sols:[[whole]]};
+    if (whole) return {constant:true, value:1, sols:[[whole]], primes:[whole], T};
+    const essential = new Set();
+    T.forEach(m => { const c = primes.filter(p => p.cells.includes(m)); if (c.length===1) essential.add(c[0].id); });
     let best = null; const sols = []; const keys = new Set();
     const cost = s => [s.length, s.reduce((a,p)=>a+p.lits,0)];
     const cmp = (a,b) => a[0]-b[0] || a[1]-b[1];
     (function rec(chosen, uncov){
       if (!uncov.length){
         const c = cost(chosen), key = chosen.map(p=>p.id).sort((a,b)=>a-b).join(',');
-        if (!best || cmp(c,best)<0){ best=c; sols.length=0; keys.clear(); }
-        if (cmp(c,best)===0 && !keys.has(key) && sols.length<12){ keys.add(key); sols.push(chosen.slice()); }
+        if (!best || cmp(c,best) < 0){ best = c; sols.length = 0; keys.clear(); }
+        if (cmp(c,best)===0 && !keys.has(key) && sols.length < 12){ keys.add(key); sols.push(chosen.slice()); }
         return;
       }
       if (best){ const c = cost(chosen); if (cmp([c[0]+1, c[1]+1], best) > 0) return; }
       let opts = null;
-      for (const m of uncov){ const o = primes.filter(p=>p.cells.includes(m)); if (!opts || o.length<opts.length) opts = o; }
-      for (const p of opts){
-        if (chosen.includes(p)) continue;
-        chosen.push(p); rec(chosen, uncov.filter(m=>!p.cells.includes(m))); chosen.pop();
-      }
+      for (const m of uncov){ const o = primes.filter(p => p.cells.includes(m)); if (!opts || o.length < opts.length) opts = o; }
+      for (const p of opts){ if (chosen.includes(p)) continue; chosen.push(p); rec(chosen, uncov.filter(m => !p.cells.includes(m))); chosen.pop(); }
     })([], T);
-    sols.forEach(s => s.sort((a,b)=> b.cells.length-a.cells.length || a.val-b.val));
-    return {constant:false, sols, cost:best};
+    sols.forEach(s => s.sort((a,b) => b.cells.length-a.cells.length || a.val-b.val));
+    return {constant:false, sols, cost:best, primes, essential, T};
   }
 
-  /* ---------- formatting ---------- */
+  /* ================= formatting ================= */
   function literals(p, vars, kind){
     const n = vars.length, out = [];
     for (let i=0;i<n;i++){ const bit = 1<<(n-1-i); if (p.mask & bit){ const one = !!(p.val & bit); out.push({v:vars[i], neg: kind==='sop' ? !one : one}); } }
@@ -400,270 +524,550 @@
   const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const litH = l => l.neg ? `<span class="ov">${esc(l.v)}</span>` : esc(l.v);
   const litT = l => (l.neg ? '¬' : '') + l.v;
-  function fmt(sol, vars, kind, html){
-    const L = html ? litH : litT;
-    if (kind==='sop') return sol.map(p => literals(p,vars,'sop').map(L).join('·')).join(' + ');
-    return sol.map(p => { const ls = literals(p,vars,'pos'); const s = ls.map(L).join(' + '); return ls.length>1 ? `(${s})` : s; }).join('·');
+  const constOf = (r, kind) => kind==='sop' ? r.value : (r.value ? 0 : 1);
+  function groupsOf(oi){
+    const o = P.outputs[oi], d = D.outs[oi], kind = effMode(oi), r = d.res[kind];
+    if (r.constant) return {kind, constant:true, value:constOf(r,kind), groups:[]};
+    const sol = r.sols[o.variant[kind]] || r.sols[0];
+    return {kind, constant:false, sol, groups: sol.map(p => literals(p, D.vars, kind))};
   }
-  function formula(r, vars, kind, idx, html){
-    if (r.constant){
-      const v = kind==='sop' ? r.value : (r.value ? 0 : 1);
-      return String(v);
-    }
-    return fmt(r.sols[idx], vars, kind, html);
+  function formulaFrom(kind, r, idx, L){
+    if (r.constant) return String(constOf(r, kind));
+    const sol = r.sols[idx];
+    if (kind==='sop') return sol.map(p => literals(p,D.vars,'sop').map(L).join('·')).join(' + ');
+    return sol.map(p => { const ls = literals(p,D.vars,'pos'); const s = ls.map(L).join(' + '); return ls.length>1 && sol.length>1 ? `(${s})` : s; }).join('·');
   }
   const litCount = (r, idx) => r.constant ? 0 : r.sols[idx].reduce((a,p)=>a+p.lits,0);
+  // mode null = auto: show the shorter form (tie -> from ones)
+  function effMode(oi){ const o = P.outputs[oi]; if (o.mode) return o.mode; const r = D.outs[oi] && D.outs[oi].res; if (!r) return 'sop';
+    return litCount(r.pos, o.variant.pos) < litCount(r.sop, o.variant.sop) ? 'pos' : 'sop'; }
+  const outName = i => (P.outputs[i].name || '').trim() || `F${i+1}`;
 
-  /* ---------- rendering ---------- */
-  function layout(n){ return n===4 ? {rv:2, cv:2} : n===3 ? {rv:1, cv:2} : {rv:1, cv:1}; }
-  function cellIndex(n, r, c){ const L = layout(n); return parseInt(GRAY[L.rv][r] + GRAY[L.cv][c], 2); }
-
-  function renderKmap(){
-    const {vars, vals} = S, n = vars.length, L = layout(n), R = GRAY[L.rv].length, C = GRAY[L.cv].length;
-    const k = $('#kmap'); k.innerHTML = '';
-    k.style.gridTemplateColumns = `calc(var(--cell)*.95) repeat(${C}, var(--cell))`;
-    k.style.gridTemplateRows = `calc(var(--cell)*.75) repeat(${R}, var(--cell))`;
-    const rowName = vars.slice(0,L.rv).join(''), colName = vars.slice(L.rv).join('');
-    const corner = document.createElement('div'); corner.className = 'corner';
-    corner.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="0" x2="100" y2="100" stroke="#1b2a4a" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg><span class="r">${esc(colName)}</span><span class="l">${esc(rowName)}</span>`;
-    k.appendChild(corner);
-    GRAY[L.cv].forEach(g => { const d = document.createElement('div'); d.className='hd'; d.textContent=g; k.appendChild(d); });
-    for (let r=0;r<R;r++){
-      const h = document.createElement('div'); h.className='hd'; h.textContent = GRAY[L.rv][r]; k.appendChild(h);
-      for (let c=0;c<C;c++){
-        const m = cellIndex(n,r,c), v = vals[m];
-        const b = document.createElement('button'); b.type='button';
-        b.className = `cell v${v}` + (r===0?' top':'') + (c===0?' left':'');
-        b.innerHTML = `${v}<span class="m" aria-hidden="true">${m}</span>`;
-        b.setAttribute('aria-label', `Kratka ${m}: ${rowName}=${GRAY[L.rv][r]}, ${colName}=${GRAY[L.cv][c]}, wartość ${v==='X'?'nieokreślona':v}. Stuknij, aby zmienić.`);
-        b.addEventListener('click', () => cycle(m));
-        k.appendChild(b);
-      }
-    }
-    // loops overlay
-    const svgNS = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(svgNS,'svg');
-    svg.setAttribute('class','loops'); svg.setAttribute('viewBox',`0 0 ${C} ${R}`); svg.setAttribute('preserveAspectRatio','none'); svg.setAttribute('aria-hidden','true');
-    svg.style.gridRow = `2 / span ${R}`; svg.style.gridColumn = `2 / span ${C}`; svg.style.width='100%'; svg.style.height='100%'; svg.style.zIndex='2';
-    const clipId = 'clip' + Math.random().toString(36).slice(2,7);
-    svg.innerHTML = `<defs><clipPath id="${clipId}"><rect x="-0.03" y="-0.03" width="${C+0.06}" height="${R+0.06}"/></clipPath></defs>`;
-    const g = document.createElementNS(svgNS,'g'); g.setAttribute('clip-path',`url(#${clipId})`); svg.appendChild(g);
-    const groupsBox = $('#groups'); groupsBox.innerHTML = '';
-    const res = S.res && S.res[S.mode];
-    if (res && !res.constant){
-      const sol = res.sols[S.variant[S.mode]] || res.sols[0];
-      const lines = [];
-      sol.forEach((p, i) => {
-        const col = COLORS[i % COLORS.length], inset = 0.07 + 0.065*(i%4);
-        const rows = [], cols = [];
-        for (let r=0;r<R;r++) for (let c=0;c<C;c++){ const m = cellIndex(n,r,c); if ((m & p.mask)===p.val){ if(!rows.includes(r)) rows.push(r); if(!cols.includes(c)) cols.push(c); } }
-        runs(rows,R).forEach(rr => runs(cols,C).forEach(cc => {
-          const x0 = cc.s + inset - (cc.ws?0.75:0), x1 = cc.e + 1 - inset + (cc.we?0.75:0);
-          const y0 = rr.s + inset - (rr.ws?0.75:0), y1 = rr.e + 1 - inset + (rr.we?0.75:0);
-          const rect = document.createElementNS(svgNS,'rect');
-          rect.setAttribute('x',x0); rect.setAttribute('y',y0); rect.setAttribute('width',x1-x0); rect.setAttribute('height',y1-y0);
-          rect.setAttribute('rx',0.26); rect.setAttribute('ry',0.26); rect.setAttribute('stroke',col);
-          g.appendChild(rect);
-        }));
-        const term = S.mode==='sop' ? literals(p,S.vars,'sop').map(litH).join('·') : (()=>{const ls=literals(p,S.vars,'pos'); return ls.map(litH).join(' + ');})();
-        lines.push(`<div><span class="sw" style="border-color:${col}"></span><span style="font-family:var(--mono)">${term}</span> <span style="color:var(--muted)">– kratki ${p.cells.join(', ')}</span></div>`);
-      });
-      groupsBox.innerHTML = lines.join('');
-    } else if (res && res.constant){
-      groupsBox.innerHTML = `<div class="empty">Funkcja jest stała, więc nie ma czego sklejać.</div>`;
-    }
-    k.appendChild(svg);
-  }
+  /* ================= K-map geometry ================= */
+  const layout = n => n===4 ? {rv:2,cv:2} : n===3 ? {rv:1,cv:2} : {rv:1,cv:1};
+  const cellIndex = (n, r, c) => { const L = layout(n); return parseInt(GRAY[L.rv][r] + GRAY[L.cv][c], 2); };
   function runs(idx, size){
     idx.sort((a,b)=>a-b);
-    if (idx.length===size) return [{s:0, e:size-1}];
+    if (idx.length===size) return [{s:0,e:size-1}];
     if (idx[idx.length-1]-idx[0] === idx.length-1) return [{s:idx[0], e:idx[idx.length-1]}];
     return [{s:idx[idx.length-1], e:size-1, we:true}, {s:0, e:idx[0], ws:true}];
   }
+  function loopsFor(oi){
+    const g = groupsOf(oi); if (g.constant) return [];
+    const n = D.vars.length, L = layout(n), R = GRAY[L.rv].length, C = GRAY[L.cv].length;
+    return g.sol.map((p, i) => {
+      const col = COLORS[i % COLORS.length], inset = 0.07 + 0.065*(i%4), rows = [], cols = [];
+      for (let r=0;r<R;r++) for (let c=0;c<C;c++){ const m = cellIndex(n,r,c); if ((m & p.mask)===p.val){ if (!rows.includes(r)) rows.push(r); if (!cols.includes(c)) cols.push(c); } }
+      const rects = [];
+      runs(rows,R).forEach(rr => runs(cols,C).forEach(cc => rects.push({
+        x0: cc.s + inset - (cc.ws?0.75:0), x1: cc.e + 1 - inset + (cc.we?0.75:0),
+        y0: rr.s + inset - (rr.ws?0.75:0), y1: rr.e + 1 - inset + (rr.we?0.75:0) })));
+      return {p, col, rects, lits: literals(p, D.vars, g.kind)};
+    });
+  }
+
+  /* ================= rendering: tabs & view ================= */
+  function renderTabs(){
+    const box = $('#otabs'); box.hidden = P.view !== 'fn';
+    box.innerHTML = P.outputs.map((o,i) => `<button type="button" class="otab${D.outs[i] && D.outs[i].err ? ' err' : ''}" role="tab" aria-selected="${i===P.cur}" data-i="${i}">${esc(outName(i))}</button>`).join('')
+      + `<button type="button" class="otab add" id="addOut" aria-label="Dodaj wyjście">+ dodaj</button>`;
+    box.querySelectorAll('.otab[data-i]').forEach(b => b.addEventListener('click', () => { P.cur = +b.dataset.i; loadFields(); renderAll(); }));
+    $('#addOut').addEventListener('click', addOutput);
+    const sel = box.querySelector('[aria-selected=true]'); if (sel && sel.scrollIntoView) sel.scrollIntoView({block:'nearest', inline:'nearest'});
+  }
+  function setView(v){
+    P.view = v;
+    ['fn','tt','code','task'].forEach(k => { $('#v-'+k).hidden = k !== v; });
+    document.querySelectorAll('.nav button').forEach(b => { if (b.dataset.view === v) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+    $('#viewTitle').textContent = {fn:'Funkcja', tt:'Tabela prawdy', code:'Kod i eksport', task:'Zadanie'}[v];
+    renderAll();
+    window.scrollTo(0,0);
+  }
+
+  /* ================= rendering: funkcja ================= */
+  function loadFields(){
+    const o = P.outputs[P.cur];
+    $('#fname').value = o.name; $('#fexpr').value = o.f; $('#xexpr').value = o.x;
+    $('#nvars').value = P.nvars; $('#vorder').value = P.order;
+    $('#delOut').disabled = P.outputs.length < 2;
+  }
+  function msg(el, type, html){ if (!type){ el.hidden = true; el.innerHTML = ''; return; } el.hidden = false; el.className = 'msg ' + type; el.innerHTML = html; }
+
+  function renderFn(){
+    const d = D.outs[P.cur], o = P.outputs[P.cur];
+    $('#delOut').disabled = P.outputs.length < 2;
+    $('#fexpr').classList.toggle('bad', !!(d.err && /^Jedynki/.test(d.err)));
+    $('#xexpr').classList.toggle('bad', !!(d.err && /^Stany/.test(d.err)));
+    const showRes = !d.err;
+    ['#kcard','#rcard','#ldcard','#stcard'].forEach(s => $(s).hidden = !showRes);
+    if (d.err){ msg($('#fnMsg'), 'err', esc(d.err)); return; }
+    if (d.conflicts) msg($('#fnMsg'), 'warn', `${d.conflicts} kratek wpisano jednocześnie jako 1 i X. Przyjąłem X.`);
+    else if (d.empty) msg($('#fnMsg'), 'warn', 'Wpisz wzór albo numery kratek. Na razie wszystkie kratki mają 0.');
+    else msg($('#fnMsg'));
+    const em = effMode(P.cur); $('#segSop').setAttribute('aria-pressed', em==='sop'); $('#segPos').setAttribute('aria-pressed', em==='pos');
+    renderKmap(); renderResults(); renderLD(); renderSteps();
+  }
+
+  function renderKmap(){
+    const oi = P.cur, vars = D.vars, vals = D.outs[oi].vals, n = vars.length, L = layout(n), R = GRAY[L.rv].length, C = GRAY[L.cv].length;
+    const k = $('#kmap'); k.innerHTML = '';
+    k.style.gridTemplateColumns = `calc(var(--cell)*.95) repeat(${C}, var(--cell))`;
+    k.style.gridTemplateRows = `calc(var(--cell)*.72) repeat(${R}, var(--cell))`;
+    const place = (el, r, c) => { el.style.gridRow = String(r); el.style.gridColumn = String(c); };
+    const rowName = vars.slice(0,L.rv).join(''), colName = vars.slice(L.rv).join('');
+    const corner = document.createElement('div'); corner.className = 'corner'; place(corner,1,1);
+    corner.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="0" x2="100" y2="100" stroke="#1b2a4a" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg><span class="r">${esc(colName)}</span><span class="l">${esc(rowName)}</span>`;
+    k.appendChild(corner);
+    GRAY[L.cv].forEach((g,c) => { const h = document.createElement('div'); h.className = 'hd'; h.textContent = g; place(h,1,c+2); k.appendChild(h); });
+    for (let r=0;r<R;r++){
+      const h = document.createElement('div'); h.className = 'hd'; h.textContent = GRAY[L.rv][r]; place(h,r+2,1); k.appendChild(h);
+      for (let c=0;c<C;c++){
+        const m = cellIndex(n,r,c), v = vals[m];
+        const b = document.createElement('button'); b.type = 'button'; place(b,r+2,c+2);
+        b.className = `cell v${v}` + (r===0?' top':'') + (c===0?' left':'');
+        b.dataset.m = m;
+        b.innerHTML = `${v}<span class="m" aria-hidden="true">${m}</span>`;
+        b.setAttribute('aria-label', `Kratka ${m}, ${rowName}=${GRAY[L.rv][r]}, ${colName}=${GRAY[L.cv][c]}, wartość ${v==='X'?'nieokreślona':v}`);
+        b.addEventListener('click', () => { cycleCell(oi, m); const nb = $(`#kmap .cell[data-m="${m}"]`); if (nb) nb.focus({preventScroll:true}); });
+        k.appendChild(b);
+      }
+    }
+    const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS,'svg');
+    svg.setAttribute('class','loops'); svg.setAttribute('viewBox',`0 0 ${C} ${R}`); svg.setAttribute('preserveAspectRatio','none'); svg.setAttribute('aria-hidden','true');
+    svg.style.gridRow = `2 / span ${R}`; svg.style.gridColumn = `2 / span ${C}`; svg.style.width = '100%'; svg.style.height = '100%'; svg.style.zIndex = '2';
+    const cid = 'cl' + Math.random().toString(36).slice(2,7);
+    svg.innerHTML = `<defs><clipPath id="${cid}"><rect x="-0.03" y="-0.03" width="${C+0.06}" height="${R+0.06}"/></clipPath></defs><g clip-path="url(#${cid})"></g>`;
+    const g = svg.querySelector('g');
+    const loops = loopsFor(oi), kind = effMode(oi);
+    loops.forEach(lp => lp.rects.forEach(rc => {
+      const e = document.createElementNS(NS,'rect');
+      e.setAttribute('x',rc.x0); e.setAttribute('y',rc.y0); e.setAttribute('width',rc.x1-rc.x0); e.setAttribute('height',rc.y1-rc.y0);
+      e.setAttribute('rx',0.26); e.setAttribute('ry',0.26); e.setAttribute('stroke',lp.col); g.appendChild(e);
+    }));
+    k.appendChild(svg);
+    const res = D.outs[oi].res[kind];
+    $('#groups').innerHTML = res.constant ? `<div class="empty">Funkcja jest stała, nie ma czego sklejać.</div>`
+      : loops.map(lp => `<div><span class="sw" style="border-color:${lp.col}"></span><span style="font-family:var(--mono)">${lp.lits.map(litH).join(kind==='sop'?'·':' + ')}</span> <span style="color:var(--muted)">– kratki ${lp.p.cells.join(', ')}</span></div>`).join('');
+  }
 
   function renderResults(){
-    const box = $('#results'), {vars} = S, name = esc($('#fname').value.trim() || 'F');
-    const r = S.res;
-    const lc = {sop: litCount(r.sop, S.variant.sop), pos: litCount(r.pos, S.variant.pos)};
+    const oi = P.cur, o = P.outputs[oi], r = D.outs[oi].res, name = esc(outName(oi));
+    const lc = {sop:litCount(r.sop,o.variant.sop), pos:litCount(r.pos,o.variant.pos)};
+    const em = effMode(oi);
     const better = lc.sop < lc.pos ? 'sop' : lc.pos < lc.sop ? 'pos' : 'tie';
     const block = kind => {
-      const rr = r[kind], idx = S.variant[kind];
-      const title = kind==='sop' ? 'Dysjunkcyjna (z jedynek)' : 'Koniunkcyjna (z zer)';
+      const rr = r[kind], idx = o.variant[kind], active = em===kind;
       const badge = better==='tie' ? `<span class="badge tie">równie krótka</span>` : better===kind ? `<span class="badge">krótsza</span>` : '';
-      const nTerms = rr.constant ? 0 : rr.sols[idx].length;
-      const meta = rr.constant ? 'funkcja stała' : `${nTerms} ${kind==='sop'?'iloczyn(y)':'suma(y)'}, ${lc[kind]} zmiennych we wzorze` + (rr.sols.length>1 ? ` · ${rr.sols.length} równorzędne warianty` : '');
-      const chips = (!rr.constant && rr.sols.length>1) ? `<div class="chips" role="group" aria-label="Warianty">${rr.sols.map((_,i)=>`<button type="button" class="chip" data-kind="${kind}" data-i="${i}" aria-pressed="${i===idx}">Wariant ${i+1}</button>`).join('')}</div>` : '';
-      return `<div class="res ${S.mode===kind?'active':''}">
-        <div class="top"><span class="kind">${title}</span>${badge}</div>
-        <div class="formula">${name} = ${formula(rr, vars, kind, idx, true)}</div>
+      const meta = rr.constant ? 'funkcja stała' : `${rr.sols[idx].length} ${kind==='sop'?'iloczyny':'sumy'} · ${lc[kind]} zmiennych we wzorze` + (rr.sols.length>1 ? ` · ${rr.sols.length} warianty` : '');
+      const chips = (!rr.constant && rr.sols.length>1) ? `<div class="chips">${rr.sols.map((_,i)=>`<button type="button" class="chip" data-kind="${kind}" data-i="${i}" aria-pressed="${i===idx}">Wariant ${i+1}</button>`).join('')}</div>` : '';
+      return `<div class="res${active?' active':''}">
+        <div class="head"><span class="kind">${kind==='sop'?'Z jedynek (dysjunkcyjna)':'Z zer (koniunkcyjna)'}</span>${badge}</div>
+        <div class="formula">${name} = ${formulaFrom(kind, rr, idx, litH)}</div>
         <div class="meta">${meta}</div>${chips}
         <div class="actions">
-          <button type="button" class="btn ${S.mode===kind?'primary':''}" data-show="${kind}">${S.mode===kind?'Pokazane w tablicy':'Pokaż w tablicy'}</button>
-          <button type="button" class="btn" data-copy="${kind}">Kopiuj</button>
+          ${active ? '' : `<button type="button" class="btn" data-show="${kind}">Pokaż w tablicy</button>`}
+          <button type="button" class="btn${active?' primary':''}" data-copy="${kind}">Kopiuj wzór</button>
         </div></div>`;
     };
-    box.innerHTML = block('sop') + block('pos');
-    box.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { S.variant[b.dataset.kind] = +b.dataset.i; S.mode = b.dataset.kind; renderAll(false); }));
-    box.querySelectorAll('[data-show]').forEach(b => b.addEventListener('click', () => { S.mode = b.dataset.show; renderAll(false); }));
-    box.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
-      const kind = b.dataset.copy;
-      copy(`${$('#fname').value.trim()||'F'} = ${formula(r[kind], vars, kind, S.variant[kind], false)}`);
-    }));
+    const box = $('#results');
+    box.innerHTML = block(em) + block(em==='sop' ? 'pos' : 'sop');
+    box.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { o.variant[b.dataset.kind] = +b.dataset.i; o.mode = b.dataset.kind; renderAll(); }));
+    box.querySelectorAll('[data-show]').forEach(b => b.addEventListener('click', () => { o.mode = b.dataset.show; renderAll(); const kc = $('#kcard'); if (kc.scrollIntoView) kc.scrollIntoView({behavior:'smooth', block:'start'}); }));
+    box.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => { const k2 = b.dataset.copy; copy(`${outName(oi)} = ${formulaFrom(k2, r[k2], o.variant[k2], litT)}`); }));
   }
 
-  function renderTT(){
-    const {vars, vals} = S, n = vars.length, name = esc($('#fname').value.trim() || 'F');
-    let h = `<thead><tr><th>m</th>${vars.map(v=>`<th>${esc(v)}</th>`).join('')}<th>${name}</th></tr></thead><tbody>`;
-    vals.forEach((v,m) => { h += `<tr><td class="m">${m}</td>${vars.map((_,i)=>`<td>${(m>>(n-1-i))&1}</td>`).join('')}<td class="f${v}">${v}</td></tr>`; });
-    $('#tt').innerHTML = h + '</tbody>';
-    const ones = [], zeros = [], xs = [];
-    vals.forEach((v,m)=> (v==='1'?ones:v==='0'?zeros:xs).push(m));
-    S.setsText = `${$('#fname').value.trim()||'F'}(${vars.join(',')}) = Σm(${ones.join(',')})` + (xs.length?` + d(${xs.join(',')})`:'') + `\nΠM(${zeros.join(',')})` + (xs.length?` · D(${xs.join(',')})`:'');
-    $('#sets').innerHTML = esc(S.setsText).replace('\n','<br>');
-  }
-
-  function renderLD(){
-    const box = $('#ld'), kind = S.mode, r = S.res[kind], name = $('#fname').value.trim() || 'F';
-    $('#ldform').textContent = kind==='sop' ? '– wg postaci dysjunkcyjnej' : '– wg postaci koniunkcyjnej';
-    const W = 74, RH = 66, top = 46;
-    const contact = (x, y, l) => `
-      <line x1="${x}" y1="${y}" x2="${x+24}" y2="${y}"/><line x1="${x+50}" y1="${y}" x2="${x+W}" y2="${y}"/>
+  function ldSVG(oi, forExport){
+    const g = groupsOf(oi), name = outName(oi), W = 74, RH = 66, top = 46;
+    const contact = (x, y, l) => `<line x1="${x}" y1="${y}" x2="${x+24}" y2="${y}"/><line x1="${x+50}" y1="${y}" x2="${x+W}" y2="${y}"/>
       <line x1="${x+24}" y1="${y-13}" x2="${x+24}" y2="${y+13}" stroke-width="2.4"/><line x1="${x+50}" y1="${y-13}" x2="${x+50}" y2="${y+13}" stroke-width="2.4"/>
       ${l.neg ? `<line x1="${x+19}" y1="${y+14}" x2="${x+55}" y2="${y-14}"/>` : ''}
-      <text x="${x+37}" y="${y-21}" text-anchor="middle" class="t">${esc(l.v)}</text>
-      <text x="${x+37}" y="${y+30}" text-anchor="middle" class="s">${l.neg?'NC':'NO'}</text>`;
+      <text x="${x+37}" y="${y-21}" text-anchor="middle" class="t">${esc(l.v)}</text><text x="${x+37}" y="${y+30}" text-anchor="middle" class="s">${l.neg?'NC':'NO'}</text>`;
     const coil = (x, y) => `<line x1="${x}" y1="${y}" x2="${x+20}" y2="${y}"/>
-      <path d="M ${x+28} ${y-14} Q ${x+18} ${y} ${x+28} ${y+14}" fill="none" stroke-width="2.4"/>
-      <path d="M ${x+44} ${y-14} Q ${x+54} ${y} ${x+44} ${y+14}" fill="none" stroke-width="2.4"/>
-      <line x1="${x+52}" y1="${y}" x2="${x+72}" y2="${y}"/>
-      <text x="${x+36}" y="${y-21}" text-anchor="middle" class="t">${esc(name)}</text>`;
-    let body = '', width, height;
-    if (r.constant){
-      const v = kind==='sop' ? r.value : (r.value?0:1);
-      if (!v){ box.innerHTML = `<div class="empty">Wyjście jest zawsze 0, więc cewka zostaje bez zasilania.</div>`; return; }
-      width = 260; height = 100; body = `<line x1="12" y1="${top}" x2="150" y2="${top}"/>${coil(150, top)}`;
-      body = `<line x1="10" y1="10" x2="10" y2="${height-10}" stroke-width="4"/>` + body;
+      <path d="M ${x+28} ${y-14} Q ${x+18} ${y} ${x+28} ${y+14}" fill="none" stroke-width="2.4"/><path d="M ${x+44} ${y-14} Q ${x+54} ${y} ${x+44} ${y+14}" fill="none" stroke-width="2.4"/>
+      <line x1="${x+52}" y1="${y}" x2="${x+72}" y2="${y}"/><text x="${x+36}" y="${y-21}" text-anchor="middle" class="t">${esc(name)}</text>`;
+    if (g.constant && !g.value) return null;
+    let parts = [], x = 30, height;
+    if (g.constant){ parts.push(`<line x1="10" y1="${top}" x2="${x}" y2="${top}"/>`); height = 100; }
+    else if (g.kind==='sop'){
+      const maxLen = Math.max(...g.groups.map(b=>b.length)), x0 = 30, x1 = x0 + 16 + maxLen*W + 16;
+      g.groups.forEach((br,i) => { const y = top + i*RH; let xx = x0 + 16;
+        parts.push(`<line x1="${x0}" y1="${y}" x2="${xx}" y2="${y}"/>`);
+        br.forEach(l => { parts.push(contact(xx,y,l)); xx += W; });
+        parts.push(`<line x1="${xx}" y1="${y}" x2="${x1}" y2="${y}"/>`); });
+      if (g.groups.length>1) parts.push(`<line x1="${x0}" y1="${top}" x2="${x0}" y2="${top+(g.groups.length-1)*RH}"/><line x1="${x1}" y1="${top}" x2="${x1}" y2="${top+(g.groups.length-1)*RH}"/>`);
+      parts.push(`<line x1="10" y1="${top}" x2="${x0}" y2="${top}"/>`);
+      x = x1; height = top + (g.groups.length-1)*RH + 50;
     } else {
-      const sol = r.sols[S.variant[kind]] || r.sols[0];
-      let x = 30; const parts = [];
-      if (kind === 'sop'){
-        const branches = sol.map(p => literals(p, S.vars, 'sop'));
-        const maxLen = Math.max(...branches.map(b=>b.length));
-        const x0 = 30, x1 = x0 + 16 + maxLen*W + 16;
-        branches.forEach((br, i) => {
-          const y = top + i*RH; let xx = x0 + 16;
-          parts.push(`<line x1="${x0}" y1="${y}" x2="${xx}" y2="${y}"/>`);
-          br.forEach(l => { parts.push(contact(xx, y, l)); xx += W; });
-          parts.push(`<line x1="${xx}" y1="${y}" x2="${x1}" y2="${y}"/>`);
-        });
-        if (branches.length>1) parts.push(`<line x1="${x0}" y1="${top}" x2="${x0}" y2="${top+(branches.length-1)*RH}"/><line x1="${x1}" y1="${top}" x2="${x1}" y2="${top+(branches.length-1)*RH}"/>`);
-        parts.push(`<line x1="10" y1="${top}" x2="${x0}" y2="${top}"/>`);
-        x = x1; height = top + (branches.length-1)*RH + 50;
-      } else {
-        const blocks = sol.map(p => literals(p, S.vars, 'pos'));
-        parts.push(`<line x1="10" y1="${top}" x2="${x}" y2="${top}"/>`);
-        let maxK = 1;
-        blocks.forEach(bl => {
-          if (bl.length === 1){ parts.push(contact(x, top, bl[0])); x += W; return; }
-          maxK = Math.max(maxK, bl.length);
-          const xa = x + 10, xb = xa + W + 10;
-          parts.push(`<line x1="${x}" y1="${top}" x2="${xa}" y2="${top}"/>`);
-          bl.forEach((l, j) => { const y = top + j*RH; parts.push(`<line x1="${xa}" y1="${y}" x2="${xa+5}" y2="${y}"/>`); parts.push(contact(xa+5, y, l)); parts.push(`<line x1="${xa+5+W}" y1="${y}" x2="${xb}" y2="${y}"/>`); });
-          parts.push(`<line x1="${xa}" y1="${top}" x2="${xa}" y2="${top+(bl.length-1)*RH}"/><line x1="${xb}" y1="${top}" x2="${xb}" y2="${top+(bl.length-1)*RH}"/>`);
-          x = xb + 10; parts.push(`<line x1="${xb}" y1="${top}" x2="${x}" y2="${top}"/>`);
-        });
-        height = top + (maxK-1)*RH + 50;
+      parts.push(`<line x1="10" y1="${top}" x2="${x}" y2="${top}"/>`); let maxK = 1;
+      g.groups.forEach(bl => {
+        if (bl.length===1){ parts.push(contact(x,top,bl[0])); x += W; return; }
+        maxK = Math.max(maxK, bl.length); const xa = x+10, xb = xa+W+10;
+        parts.push(`<line x1="${x}" y1="${top}" x2="${xa}" y2="${top}"/>`);
+        bl.forEach((l,j) => { const y = top + j*RH; parts.push(`<line x1="${xa}" y1="${y}" x2="${xa+5}" y2="${y}"/>`, contact(xa+5,y,l), `<line x1="${xa+5+W}" y1="${y}" x2="${xb}" y2="${y}"/>`); });
+        parts.push(`<line x1="${xa}" y1="${top}" x2="${xa}" y2="${top+(bl.length-1)*RH}"/><line x1="${xb}" y1="${top}" x2="${xb}" y2="${top+(bl.length-1)*RH}"/>`);
+        x = xb + 10; parts.push(`<line x1="${xb}" y1="${top}" x2="${x}" y2="${top}"/>`);
+      });
+      height = top + (maxK-1)*RH + 50;
+    }
+    const xc = Math.max(x+20, 200), width = xc + 90;
+    parts.push(`<line x1="${x}" y1="${top}" x2="${xc}" y2="${top}"/>`, coil(xc, top));
+    const body = `<line x1="10" y1="12" x2="10" y2="${height-8}" stroke-width="4"/><line x1="${xc+72}" y1="12" x2="${xc+72}" y2="${height-8}" stroke-width="4"/>` + parts.join('');
+    return {w:width, h:height, svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="Drabinka LD dla ${esc(name)}">
+      <style>line,path{stroke:#1b2a4a;stroke-width:1.6;stroke-linecap:round}.t{font:600 13px 'JetBrains Mono',Menlo,monospace;fill:#1f4f9a}.s{font:10px Inter,Arial,sans-serif;fill:#8a93a6}</style>
+      ${forExport ? `<rect width="100%" height="100%" fill="#fff"/>` : ''}${body}</svg>`};
+  }
+  function renderLD(){
+    const o = P.outputs[P.cur];
+    $('#ldform').textContent = effMode(P.cur)==='sop' ? 'wg postaci z jedynek' : 'wg postaci z zer';
+    const s = ldSVG(P.cur, false);
+    $('#ld').innerHTML = s ? s.svg : `<div class="empty">Wyjście jest zawsze 0, więc cewka zostaje bez zasilania.</div>`;
+  }
+
+  function renderSteps(){
+    const oi = P.cur, o = P.outputs[oi], kind = effMode(oi), r = D.outs[oi].res[kind], box = $('#steps');
+    if (r.constant){ box.innerHTML = `<div class="empty">Funkcja stała, nie ma kroków sklejania.</div>`; return; }
+    const chosen = new Set((r.sols[o.variant[kind]]||r.sols[0]).map(p=>p.id));
+    const sizes = [...new Set(r.primes.map(p=>p.cells.length))].sort((a,b)=>b-a);
+    const nameOf = s => ({1:'Pojedyncze kratki',2:'Pary (2 kratki)',4:'Czwórki (4 kratki)',8:'Ósemki (8 kratek)'}[s] || `${s} kratek`);
+    const what = kind==='sop' ? 'jedynek' : 'zer';
+    let h = `<p class="small" style="margin:0 0 10px">Sklejanie ${what}: kratki X wolno dołączać do grup. Poniżej są wszystkie <b>implikanty proste</b>, czyli największe możliwe grupy. Grupa <b>zasadnicza</b> jako jedyna pokrywa którąś kratkę, więc musi trafić do wyniku.</p>`;
+    sizes.forEach(s => {
+      h += `<div class="step"><h3>${nameOf(s)}</h3>`;
+      r.primes.filter(p=>p.cells.length===s).forEach(p => {
+        const ls = literals(p, D.vars, kind), t = ls.map(litH).join(kind==='sop'?'·':' + ');
+        const tag = r.essential.has(p.id) ? `<span class="tag e">zasadnicza</span>` : chosen.has(p.id) ? `<span class="tag s">wybrana</span>` : `<span class="tag n">zbędna</span>`;
+        h += `<div class="pi"><span class="t">${kind==='pos' && ls.length>1 ? '('+t+')' : t}</span><span class="c">${p.cells.join(', ')}</span>${tag}</div>`;
+      });
+      h += `</div>`;
+    });
+    h += `<p class="small" style="margin:10px 0 0">Do pokrycia: kratki ${r.T.join(', ')}. Wynik: ${r.cost[0]} grup${r.cost[0]===1?'a':'y'}, ${r.cost[1]} zmiennych we wzorze.</p>`;
+    box.innerHTML = h;
+  }
+
+  /* ================= rendering: tabela ================= */
+  const pairBits = (m, n, pi) => { const s = m.toString(2).padStart(n,'0'); return pi===0 ? s.slice(0,2) : s.slice(2,4); };
+  function rowInfo(m){
+    const n = D.vars.length; if (n !== 4) return {txt:'', fault:false, any:false};
+    let fault = false, any = false; const parts = [];
+    ['p1','p2'].forEach((k,pi) => { const dsc = P.desc[k]; if (dsc.type==='none') return; any = true;
+      const b = pairBits(m,4,pi), lab = dsc.label ? esc(dsc.label)+': ' : '';
+      if (b==='01'){ fault = true; parts.push(`${lab}<b>awaria</b>`); } else parts.push(lab + DESC[dsc.type].short[b]); });
+    return {txt:parts.join('<br>'), fault, any};
+  }
+  function renderDesc(){
+    const box = $('#descbox'), n = D.vars.length;
+    const anyDesc = P.desc.p1.type!=='none' || P.desc.p2.type!=='none';
+    $('#descsum').textContent = n!==4 ? 'dla 4 zmiennych' : anyDesc ? 'włączony' : 'wyłączony';
+    if (n !== 4){ box.innerHTML = `<p class="small" style="margin:0">Opis działa dla 4 zmiennych, gdy dwie pary czujników kodują poziom lub temperaturę.</p>`; return; }
+    const opt = (cur) => ['none','level','temp'].map(t => `<option value="${t}"${cur===t?' selected':''}>${t==='none'?'bez opisu':t==='level'?'poziom':'temperatura'}</option>`).join('');
+    box.innerHTML = `<p class="small" style="margin:0 0 10px">Kodowanie dwoma czujnikami: 00 niski / zimna, 10 średni / letnia, 11 wysoki / gorąca, 01 awaria.</p>`
+      + ['p1','p2'].map((k,pi) => `<div class="descrow"><span class="vv">${esc(D.vars.slice(pi*2,pi*2+2).join(''))}</span>
+        <select data-dk="${k}" aria-label="Rodzaj pary ${pi+1}">${opt(P.desc[k].type)}</select>
+        <input type="text" data-dl="${k}" value="${esc(P.desc[k].label)}" placeholder="nazwa" aria-label="Nazwa pary ${pi+1}" autocomplete="off"></div>`).join('');
+    box.querySelectorAll('select[data-dk]').forEach(s => s.addEventListener('change', () => { P.desc[s.dataset.dk].type = s.value; renderAll(); }));
+    box.querySelectorAll('input[data-dl]').forEach(inp => inp.addEventListener('input', () => { P.desc[inp.dataset.dl].label = inp.value; renderTT(); }));
+  }
+  function renderTT(){
+    const n = D.vars.length, N = 1<<n;
+    if (D.err){ msg($('#ttMsg'),'err',esc(D.err)); $('#tt').innerHTML = ''; $('#faultbar').hidden = true; return; }
+    const bad = D.outs.map((d,i)=> d.err ? outName(i) : null).filter(Boolean);
+    msg($('#ttMsg'), bad.length ? 'warn' : null, bad.length ? `Błąd we wzorze: ${esc(bad.join(', '))}. Popraw go w zakładce Funkcja.` : '');
+    const hasDesc = n===4 && (P.desc.p1.type!=='none' || P.desc.p2.type!=='none');
+    let h = `<thead><tr><th>m</th>${D.vars.map(v=>`<th>${esc(v)}</th>`).join('')}${hasDesc?'<th>stan</th>':''}${P.outputs.map((_,i)=>`<th>${esc(outName(i))}</th>`).join('')}</tr></thead><tbody>`;
+    for (let m=0; m<N; m++){
+      const info = rowInfo(m);
+      h += `<tr class="${info.fault?'fault':''}"><td class="m">${m}</td>${D.vars.map((_,k)=>`<td>${(m>>(n-1-k))&1}</td>`).join('')}${hasDesc?`<td class="op">${info.txt}</td>`:''}`;
+      h += D.outs.map((d,i) => d.err ? `<td>–</td>` : `<td><button type="button" class="tcell v${d.vals[m]}" data-o="${i}" data-m="${m}" aria-label="${esc(outName(i))}, kratka ${m}, wartość ${d.vals[m]}">${d.vals[m]}</button></td>`).join('') + `</tr>`;
+    }
+    $('#tt').innerHTML = h + '</tbody>';
+    $('#tt').querySelectorAll('.tcell').forEach(b => b.addEventListener('click', () => {
+      const oi = +b.dataset.o, m = +b.dataset.m; cycleCell(oi, m);
+      const nb = $(`#tt .tcell[data-o="${oi}"][data-m="${m}"]`); if (nb) nb.focus({preventScroll:true});
+    }));
+    const fb = $('#faultbar');
+    if (hasDesc){
+      fb.hidden = false;
+      const okOuts = P.outputs.map((_,i)=>i).filter(i=>!D.outs[i].err);
+      fb.innerHTML = `<span>Wiersze awarii:</span><select id="fbOut" aria-label="Wyjście">${okOuts.map(i=>`<option value="${i}">${esc(outName(i))}</option>`).join('')}</select>`
+        + ['X','1','0'].map(v=>`<button type="button" class="btn" data-fv="${v}" aria-label="Ustaw ${v} we wszystkich wierszach awarii">= ${v}</button>`).join('');
+      if (fb.dataset.sel && okOuts.includes(+fb.dataset.sel)) $('#fbOut').value = fb.dataset.sel;
+      $('#fbOut').addEventListener('change', e => fb.dataset.sel = e.target.value);
+      fb.querySelectorAll('[data-fv]').forEach(b => b.addEventListener('click', () => {
+        const oi = +$('#fbOut').value; fb.dataset.sel = String(oi);
+        const rows = []; for (let m=0;m<N;m++) if (rowInfo(m).fault) rows.push(m);
+        setCells(oi, rows.map(m => [m, b.dataset.fv]));
+        toast(`${outName(oi)}: ${rows.length} wierszy awarii = ${b.dataset.fv}`);
+      }));
+    } else fb.hidden = true;
+  }
+  function setsText(){
+    return P.outputs.map((o,i) => {
+      const d = D.outs[i]; if (d.err) return `${outName(i)}: błąd we wzorze`;
+      const ones = [], xs = []; d.vals.forEach((v,m) => { if (v==='1') ones.push(m); if (v==='X') xs.push(m); });
+      return `${outName(i)}(${D.vars.join(',')}) = Σm(${ones.join(',')})` + (xs.length ? ` + d(${xs.join(',')})` : '');
+    }).join('\n');
+  }
+
+  /* ================= rendering: kod ================= */
+  function codeFor(lang){
+    const vars = D.vars, ok = P.outputs.map((_,i)=>i).filter(i=>!D.outs[i].err);
+    const safe = s => s.replace(/[^A-Za-z0-9_]/g,'_').replace(/^(\d)/,'_$1');
+    const q = v => lang==='tia' ? `"${v}"` : safe(v);
+    const NOT = lang==='vhdl' ? 'not ' : 'NOT ', AND = lang==='vhdl' ? ' and ' : ' AND ', OR = lang==='vhdl' ? ' or ' : ' OR ';
+    const lit = l => (l.neg ? NOT : '') + q(l.v);
+    const expr = i => {
+      const g = groupsOf(i);
+      if (g.constant) return lang==='vhdl' ? (g.value ? "'1'" : "'0'") : (g.value ? 'TRUE' : 'FALSE');
+      const inner = g.kind==='sop' ? AND : OR, outer = g.kind==='sop' ? OR : AND;
+      return g.groups.map(t => { const s = t.map(lit).join(inner); return t.length>1 && g.groups.length>1 ? `(${s})` : s; }).join(outer);
+    };
+    const human = i => { const o = P.outputs[i], k = effMode(i); return `${outName(i)} = ${formulaFrom(k, D.outs[i].res[k], o.variant[k], litT)}`; };
+    if (!ok.length) return '// Brak poprawnych wyjść';
+    if (lang==='vhdl'){
+      const outs = ok.map(i => safe(outName(i)));
+      return `-- Układ kombinacyjny wygenerowany z tablic Karnaugha\n${ok.map(i=>'-- '+human(i)).join('\n')}\nlibrary ieee;\nuse ieee.std_logic_1164.all;\n\nentity uklad is\n  port (\n    ${vars.map(safe).join(', ')} : in  std_logic;\n    ${outs.join(', ')} : out std_logic\n  );\nend entity;\n\narchitecture logika of uklad is\nbegin\n${ok.map(i=>`  ${safe(outName(i))} <= ${expr(i)};`).join('\n')}\nend architecture;`;
+    }
+    const head = lang==='tia' ? `// SCL dla TIA Portal (np. w bloku FC lub w OB1)\n// Tagi wejść ${vars.map(v=>`"${v}"`).join(', ')} i wyjść muszą być w tablicy tagów (Bool)` : `// Structured Text (IEC 61131-3): CODESYS, TwinCAT itp.\n// Zmienne typu BOOL`;
+    return `${head}\n${ok.map(i=>'// '+human(i)).join('\n')}\n\n${ok.map(i=>`${q(outName(i))} := ${expr(i)};`).join('\n')}`;
+  }
+  function latexFor(){
+    const vars = D.vars, n = vars.length, N = 1<<n, ok = P.outputs.map((_,i)=>i).filter(i=>!D.outs[i].err);
+    const tn = s => { const m = s.match(/^([A-Za-z]+)_?(\d+)$/); return m ? `${m[1]}_{${m[2]}}` : s.replace(/[_&%#$]/g, c=>'\\'+c); };
+    const ll = l => l.neg ? `\\overline{${l.v}}` : l.v;
+    let s = `% Tabela prawdy\n\\begin{tabular}{|${'c'.repeat(n)}|${'c'.repeat(ok.length)}|}\n\\hline\n${[...vars, ...ok.map(i=>`$${tn(outName(i))}$`)].join(' & ')} \\\\\n\\hline\n`;
+    for (let m=0;m<N;m++) s += [...vars.map((_,k)=>(m>>(n-1-k))&1), ...ok.map(i=>D.outs[i].vals[m]==='X'?'X':D.outs[i].vals[m])].join(' & ') + ' \\\\\n';
+    s += `\\hline\n\\end{tabular}\n\n% Postacie minimalne\n\\begin{align*}\n`;
+    s += ok.map(i => { const g = groupsOf(i); let f;
+      if (g.constant) f = String(g.value);
+      else if (g.kind==='sop') f = g.groups.map(t=>t.map(ll).join('')).join(' + ');
+      else f = g.groups.map(t => t.length>1 && g.groups.length>1 ? `(${t.map(ll).join(' + ')})` : t.map(ll).join(' + ')).join('');
+      return `${tn(outName(i))} &= ${f}`; }).join(' \\\\\n') + `\n\\end{align*}`;
+    return s;
+  }
+  function renderCode(){
+    document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang===P.lang));
+    $('#code').textContent = D.err ? D.err : codeFor(P.lang);
+    $('#latex').textContent = D.err ? D.err : latexFor();
+    const sel = $('#imgOut'), prev = sel.value;
+    sel.innerHTML = P.outputs.map((_,i)=> D.outs[i].err ? '' : `<option value="${i}">${esc(outName(i))}</option>`).join('');
+    if (prev !== '' && [...sel.options].some(o=>o.value===prev)) sel.value = prev; else if ([...sel.options].some(o=>o.value===String(P.cur))) sel.value = String(P.cur);
+  }
+
+  /* ================= export images ================= */
+  function kmapSVG(oi){
+    const vars = D.vars, vals = D.outs[oi].vals, n = vars.length, L = layout(n), R = GRAY[L.rv].length, C = GRAY[L.cv].length;
+    const cs = 60, ox = 62, oy = 54, W = ox + C*cs + 24, H = oy + R*cs + 54;
+    const o = P.outputs[oi], kind = effMode(oi), r = D.outs[oi].res[kind];
+    const rowName = vars.slice(0,L.rv).join(''), colName = vars.slice(L.rv).join('');
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"><rect width="100%" height="100%" fill="#fff"/>
+      <style>.h{font:700 14px Menlo,Consolas,monospace;fill:#1b2a4a}.v{font:700 24px Menlo,Consolas,monospace;fill:#1b2a4a}.v0{font:400 24px Menlo,Consolas,monospace;fill:#8a93a6}.vX{font:italic 400 22px Menlo,Consolas,monospace;fill:#9aa1b1}.f{font:600 17px Menlo,Consolas,monospace;fill:#1b2a4a}.m{font:10px Arial,sans-serif;fill:#9aa1b1}</style>
+      <line x1="${ox-48}" y1="${oy-44}" x2="${ox}" y2="${oy}" stroke="#1b2a4a" stroke-width="1.2"/>
+      <text x="${ox-14}" y="${oy-30}" class="h" text-anchor="end">${esc(colName)}</text><text x="${ox-56}" y="${oy-4}" class="h">${esc(rowName)}</text>`;
+    GRAY[L.cv].forEach((g,c) => s += `<text x="${ox+c*cs+cs/2}" y="${oy-12}" class="h" text-anchor="middle">${g}</text>`);
+    for (let rr=0; rr<R; rr++){
+      s += `<text x="${ox-14}" y="${oy+rr*cs+cs/2+5}" class="h" text-anchor="end">${GRAY[L.rv][rr]}</text>`;
+      for (let c=0;c<C;c++){ const m = cellIndex(n,rr,c), v = vals[m];
+        s += `<rect x="${ox+c*cs}" y="${oy+rr*cs}" width="${cs}" height="${cs}" fill="#fff" stroke="#1b2a4a" stroke-width="1.5"/>`
+          + `<text x="${ox+c*cs+cs/2}" y="${oy+rr*cs+cs/2+8}" text-anchor="middle" class="${v==='1'?'v':'v'+v}">${v}</text><text x="${ox+c*cs+4}" y="${oy+rr*cs+cs-4}" class="m">${m}</text>`; }
+    }
+    s += `<defs><clipPath id="kc"><rect x="${ox-2}" y="${oy-2}" width="${C*cs+4}" height="${R*cs+4}"/></clipPath></defs><g clip-path="url(#kc)">`;
+    loopsFor(oi).forEach(lp => lp.rects.forEach(rc => s += `<rect x="${ox+rc.x0*cs}" y="${oy+rc.y0*cs}" width="${(rc.x1-rc.x0)*cs}" height="${(rc.y1-rc.y0)*cs}" rx="${0.26*cs}" fill="none" stroke="${lp.col}" stroke-width="3.2"/>`));
+    s += `</g>`;
+    const litS = l => l.neg ? `<tspan text-decoration="overline">${esc(l.v)}</tspan>` : esc(l.v);
+    s += `<text x="${ox + C*cs/2}" y="${oy+R*cs+34}" class="f" text-anchor="middle">${esc(outName(oi))} = ${formulaFrom(kind, r, o.variant[kind], litS)}</text></svg>`;
+    return {svg:s, w:W, h:H};
+  }
+  function svgToPng(svg, w, h, cb){
+    const img = new Image(), scale = 3;
+    img.onload = () => {
+      const cv = document.createElement('canvas'); cv.width = w*scale; cv.height = h*scale;
+      const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height); ctx.drawImage(img,0,0,cv.width,cv.height);
+      cv.toBlob(b => b ? cb(b) : toast('Nie udało się utworzyć obrazka'), 'image/png');
+    };
+    img.onerror = () => toast('Nie udało się utworzyć obrazka');
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+  function saveBlob(blob, filename){
+    const coarse = window.matchMedia && window.matchMedia('(pointer:coarse)').matches;
+    try {
+      const file = new File([blob], filename, {type:blob.type});
+      if (coarse && navigator.canShare && navigator.canShare({files:[file]})){
+        navigator.share({files:[file]}).catch(err => { if (err && err.name !== 'AbortError') download(blob, filename); });
+        return;
       }
-      const xc = Math.max(x + 20, 200);
-      parts.push(`<line x1="${x}" y1="${top}" x2="${xc}" y2="${top}"/>`, coil(xc, top));
-      width = xc + 90;
-      body = `<line x1="10" y1="12" x2="10" y2="${height-8}" stroke-width="4"/><line x1="${xc+72}" y1="12" x2="${xc+72}" y2="${height-8}" stroke-width="4"/>` + parts.join('');
-    }
-    box.innerHTML = `<svg viewBox="0 0 ${width} ${height}" width="${width}" role="img" aria-label="Schemat drabinkowy LD dla ${esc(name)}">
-      <style>line,path{stroke:#1b2a4a;stroke-width:1.6;stroke-linecap:round}.t{font:600 13px 'JetBrains Mono',monospace;fill:#1f4f9a}.s{font:10px Inter,sans-serif;fill:#8a93a6}</style>${body}</svg>`;
+    } catch(e){}
+    download(blob, filename);
+  }
+  function download(blob, filename){
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = filename; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000); toast('Pobieranie: ' + filename);
   }
 
-  function showMsg(type, html){ const m = $('#fmsg'); m.className = 'msg' + (type ? ' '+type : ''); m.innerHTML = html || ''; }
+  /* ================= rendering: zadanie ================= */
+  function renderPresets(){
+    $('#presets').innerHTML = PRESETS.map(p => `<div class="preset"><h3>${esc(p.title)}</h3><p>${esc(p.text)}</p>${p.note?`<p class="note">${esc(p.note)}</p>`:''}<button type="button" class="btn" data-preset="${p.id}">Wczytaj zestaw</button></div>`).join('');
+    $('#presets').querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => loadPreset(b.dataset.preset, true)));
+  }
+  function snapshot(){ return JSON.stringify(P); }
+  function restore(s){ const o = JSON.parse(s); Object.keys(o).forEach(k => P[k] = o[k]); loadFields(); recompute(); setView(P.view); }
+  function loadPreset(id, withUndo){
+    const p = PRESETS.find(x => x.id===id); if (!p) return;
+    const snap = snapshot();
+    P.outputs = p.outs.map(([n,f,x]) => newOut(n,f,x)); P.nvars = '4'; P.order = ''; P.desc = JSON.parse(JSON.stringify(p.desc)); P.cur = 0;
+    loadFields(); recompute();
+    if (withUndo){ setView('fn'); toast(`Wczytano: ${p.title}`, {label:'Cofnij', fn:() => restore(snap)}); }
+  }
+  function projectJSON(){
+    return JSON.stringify({app:'karnaugh', version:2, vars:D.vars.join(''), nvars:P.nvars, order:P.order, desc:P.desc,
+      outputs:P.outputs.map(o => ({name:o.name, f:o.f, x:o.x}))}, null, 2);
+  }
+  function importJSON(text){
+    const a = text.indexOf('{'), b = text.lastIndexOf('}');
+    if (a < 0 || b <= a) throw new Error('Nie widzę obiektu JSON. Wklej odpowiedź zaczynającą się od „{”.');
+    let obj; try { obj = JSON.parse(text.slice(a, b+1)); } catch(e){ throw new Error('JSON ma błąd składni. Poproś AI o poprawny JSON bez komentarzy.'); }
+    const outs = obj.outputs; if (!Array.isArray(outs) || !outs.length) throw new Error('Brakuje listy „outputs”.');
+    const str = v => Array.isArray(v) ? v.join(',') : (v===undefined || v===null ? '' : String(v));
+    const snap = snapshot();
+    P.outputs = outs.map((o,i) => newOut(str(o.name) || `Z${i+1}`, str(o.f ?? o.fexpr ?? o.ones), str(o.x ?? o.xexpr ?? o.dc)));
+    const vorder = str(obj.vars || obj.vorder || (outs[0] && outs[0].vorder)).replace(/[^a-zA-Z]/g,'').toLowerCase();
+    P.order = obj.order ? str(obj.order) : (vorder && vorder !== LETTERS.slice(0, vorder.length) ? vorder : '');
+    P.nvars = obj.nvars ? String(obj.nvars) : (vorder ? String(Math.min(4, Math.max(2, vorder.length))) : 'auto');
+    const okType = t => ['none','level','temp'].includes(t) ? t : 'none';
+    P.desc = obj.desc ? {p1:{type:okType(obj.desc.p1 && obj.desc.p1.type), label:str(obj.desc.p1 && obj.desc.p1.label)}, p2:{type:okType(obj.desc.p2 && obj.desc.p2.type), label:str(obj.desc.p2 && obj.desc.p2.label)}} : JSON.parse(JSON.stringify(SENS));
+    P.cur = 0; loadFields(); recompute();
+    return {snap, explanation: obj.explanation ? str(obj.explanation) : ''};
+  }
+  function aiPrompt(task){
+    return `Jesteś asystentem do syntezy układów kombinacyjnych. Przeczytaj treść zadania na końcu i zwróć WYŁĄCZNIE jeden obiekt JSON, bez markdown i bez komentarzy, w formacie:
+{"vars":"abcd","outputs":[{"name":"Z1","f":"0,2,8","x":"1,4,5"}],"desc":{"p1":{"type":"level","label":"Zb. I"},"p2":{"type":"temp","label":"Temp."}},"explanation":"..."}
 
-  function renderAll(recalc){
-    if (recalc){
-      S.res = { sop: minimize(S.vals, S.vars.length, '1'), pos: minimize(S.vals, S.vars.length, '0') };
-      S.variant = {sop:0, pos:0};
-    }
-    $('#segSop').setAttribute('aria-pressed', S.mode==='sop'); $('#segPos').setAttribute('aria-pressed', S.mode==='pos');
-    renderKmap(); renderResults(); renderTT(); renderLD();
+Zasady:
+- "vars": kolejność sygnałów wejściowych. Pierwsza zmienna to najstarszy bit numeru kratki (dla abcd: kratka 8 = a1 b0 c0 d0, kratka 3 = a0 b0 c1 d1).
+- "f": numery kratek, w których wyjście = 1. "x": numery kratek ze stanem nieokreślonym ("" jeśli brak). Pozostałe kratki = 0.
+- W "outputs" umieść każde wyjście (Z1, Z2, …) w kolejności z zadania.
+- "desc" wypełnij, gdy pary czujników (ab, cd) kodują poziom ("level": 00 niski, 10 średni, 11 wysoki, 01 awaria) lub temperaturę ("temp": 00 zimna, 10 letnia, 11 gorąca, 01 awaria). W pozostałych przypadkach użyj "type":"none".
+- Przed odpowiedzią sprawdź po kolei wszystkie 16 kombinacji wejść.
+- Jeśli reguły się wykluczają albo czegoś brakuje, przyjmij najbardziej dosłowne odczytanie treści i opisz to krótko po polsku w "explanation".
+
+Treść zadania:
+"""
+${task.trim() || '(wklej tu treść zadania)'}
+"""`;
   }
 
-  function recompute(){
-    $('#fexpr').classList.remove('bad'); $('#xexpr').classList.remove('bad');
-    try{
-      const r = compute();
-      S.vars = r.vars; S.vals = r.vals; S.manual = false;
-      if (r.conflicts) showMsg('warn', `${r.conflicts} kratek wpisano jednocześnie jako 1 i X. Przyjąłem X.`);
-      else if (r.empty) showMsg('warn', 'Wpisz wzór albo listę kratek. Na razie wszystkie kratki mają 0.');
-      else showMsg('', '');
-      renderAll(true);
-    } catch(e){
-      showMsg('err', esc(e.message));
-      const which = (() => { try { readInput($('#fexpr').value); } catch(_){ return '#fexpr'; } try { readInput($('#xexpr').value); } catch(_){ return '#xexpr'; } return null; })();
-      if (which) $(which).classList.add('bad');
-    }
+  /* ================= actions ================= */
+  function recompute(){ compute(); renderAll(); }
+  function renderAll(){
+    renderTabs();
+    if (P.view==='fn') renderFn();
+    if (P.view==='tt'){ renderDesc(); renderTT(); }
+    if (P.view==='code') renderCode();
   }
-
-  function cycle(m){
-    const next = {'0':'1','1':'X','X':'0'};
-    S.vals[m] = next[S.vals[m]];
-    S.manual = true;
-    showMsg('warn', `Tablica zmieniona ręcznie, więc pola z góry już do niej nie pasują. <button type="button" id="restore">Przywróć ze wzoru</button>`);
-    const rb = $('#restore'); if (rb) rb.addEventListener('click', recompute);
-    renderAll(true);
-    const btn = [...document.querySelectorAll('.cell')].find(b => b.querySelector('.m').textContent == m);
-    if (btn) btn.focus({preventScroll:true});
+  function setCells(oi, changes){
+    const d = D.outs[oi]; if (!d || !d.vals) return;
+    const vals = d.vals.slice(); changes.forEach(([m,v]) => vals[m] = v);
+    const o = P.outputs[oi], wasExpr = (o.f.trim() && !isList(o.f)) || (o.x.trim() && !isList(o.x));
+    const ones = [], xs = []; vals.forEach((v,m) => { if (v==='1') ones.push(m); if (v==='X') xs.push(m); });
+    if (P.nvars === 'auto') P.nvars = String(D.vars.length);
+    if (!P.order && D.vars.join('') !== LETTERS.slice(0, D.vars.length)) P.order = D.vars.join('');
+    o.f = ones.join(','); o.x = xs.join(',');
+    if (oi === P.cur) loadFields();
+    recompute();
+    if (wasExpr) toast(`${outName(oi)}: wzór zamieniony na listę kratek`);
   }
-
+  function cycleCell(oi, m){ const v = D.outs[oi].vals[m]; setCells(oi, [[m, {'0':'1','1':'X','X':'0'}[v]]]); }
+  function addOutput(){
+    let k = P.outputs.length + 1; const names = new Set(P.outputs.map(o=>o.name));
+    while (names.has('Z'+k)) k++;
+    P.outputs.push(newOut('Z'+k)); P.cur = P.outputs.length-1; loadFields(); recompute();
+    $('#fexpr').focus();
+  }
+  function deleteOutput(){
+    if (P.outputs.length < 2) return;
+    const snap = snapshot(), name = outName(P.cur);
+    P.outputs.splice(P.cur,1); P.cur = Math.max(0, P.cur-1); loadFields(); recompute();
+    toast(`Usunięto ${name}`, {label:'Cofnij', fn:() => restore(snap)});
+  }
   function copy(text){
     const done = () => toast('Skopiowano');
-    if (navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(text).then(done, () => fallback(text, done)); }
-    else fallback(text, done);
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
+    else fallbackCopy(text, done);
   }
-  function fallback(text, done){
-    const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.opacity='0';
+  function fallbackCopy(text, done){
+    const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly',''); ta.style.position = 'fixed'; ta.style.opacity = '0';
     document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
     try { document.execCommand('copy'); done(); } catch(e){ toast('Nie udało się skopiować'); }
     ta.remove();
   }
-  let tt; function toast(t){ const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(tt); tt = setTimeout(()=>el.classList.remove('show'), 1400); }
+  let tTimer;
+  function toast(text, action){
+    const el = $('#toast'); el.innerHTML = `<span>${esc(text)}</span>` + (action ? `<button type="button">${esc(action.label)}</button>` : '');
+    el.classList.toggle('act', !!action); el.classList.add('show');
+    if (action) el.querySelector('button').addEventListener('click', () => { el.classList.remove('show','act'); action.fn(); });
+    clearTimeout(tTimer); tTimer = setTimeout(() => el.classList.remove('show','act'), action ? 5000 : 1600);
+  }
 
-  /* ---------- events ---------- */
-  let deb; const sched = () => { clearTimeout(deb); deb = setTimeout(recompute, 160); };
-  ['#fexpr','#xexpr','#vorder'].forEach(id => { $(id).addEventListener('input', sched); $(id).addEventListener('focus', e => S.lastInput = e.target); });
-  $('#nvars').addEventListener('change', recompute);
-  $('#fname').addEventListener('input', () => { if (S.res) renderAll(false); });
-  $('#segSop').addEventListener('click', () => { S.mode='sop'; renderAll(false); });
-  $('#segPos').addEventListener('click', () => { S.mode='pos'; renderAll(false); });
-  $('#copySets').addEventListener('click', () => copy(S.setsText || ''));
-  $('#preset').addEventListener('change', e => {
-    const p = PRESETS[e.target.value]; if (!p) return;
-    $('#fname').value = p.name; $('#fexpr').value = p.f; $('#xexpr').value = p.x; $('#nvars').value = p.n; $('#vorder').value = '';
-    S.mode = 'sop'; recompute();
-  });
+  /* ================= events ================= */
+  let deb, lastInput = null;
+  const sched = () => { clearTimeout(deb); deb = setTimeout(recompute, 170); };
+  $('#fname').addEventListener('input', e => { P.outputs[P.cur].name = e.target.value; renderTabs(); if (!D.outs[P.cur].err){ renderResults(); renderLD(); } });
+  $('#fexpr').addEventListener('input', e => { P.outputs[P.cur].f = e.target.value; sched(); });
+  $('#xexpr').addEventListener('input', e => { P.outputs[P.cur].x = e.target.value; sched(); });
+  $('#vorder').addEventListener('input', e => { P.order = e.target.value; sched(); });
+  $('#nvars').addEventListener('change', e => { P.nvars = e.target.value; recompute(); });
+  ['#fexpr','#xexpr','#vorder'].forEach(id => $(id).addEventListener('focus', e => lastInput = e.target));
+  $('#segSop').addEventListener('click', () => { P.outputs[P.cur].mode = 'sop'; renderAll(); });
+  $('#segPos').addEventListener('click', () => { P.outputs[P.cur].mode = 'pos'; renderAll(); });
+  $('#delOut').addEventListener('click', deleteOutput);
   document.querySelectorAll('.keys button').forEach(b => {
     b.addEventListener('pointerdown', e => e.preventDefault());
     b.addEventListener('click', () => {
-      const inp = (S.lastInput && ['fexpr','xexpr','vorder'].includes(S.lastInput.id)) ? S.lastInput : $('#fexpr');
-      const k = b.dataset.k, s = inp.selectionStart ?? inp.value.length, en = inp.selectionEnd ?? inp.value.length;
-      if (k === 'BS'){
-        if (s !== en) inp.setRangeText('', s, en, 'end');
-        else if (s > 0) inp.setRangeText('', s-1, s, 'end');
-      } else inp.setRangeText(k, s, en, 'end');
-      inp.focus({preventScroll:true}); S.lastInput = inp; sched();
+      const inp = lastInput || $('#fexpr'), k = b.dataset.k;
+      const s = inp.selectionStart ?? inp.value.length, en = inp.selectionEnd ?? inp.value.length;
+      if (k==='BS'){ if (s !== en) inp.setRangeText('', s, en, 'end'); else if (s > 0) inp.setRangeText('', s-1, s, 'end'); }
+      else inp.setRangeText(k, s, en, 'end');
+      inp.focus({preventScroll:true}); lastInput = inp;
+      inp.dispatchEvent(new Event('input', {bubbles:true}));
     });
   });
+  document.querySelectorAll('.nav button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+  $('#copySets').addEventListener('click', () => copy(setsText()));
+  document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => { P.lang = b.dataset.lang; renderCode(); }));
+  $('#copyCode').addEventListener('click', () => copy($('#code').textContent));
+  $('#copyLatex').addEventListener('click', () => copy($('#latex').textContent));
+  document.querySelectorAll('[data-img]').forEach(b => b.addEventListener('click', () => {
+    const oi = +$('#imgOut').value; if (isNaN(oi) || !D.outs[oi] || D.outs[oi].err){ toast('Najpierw popraw wzór tego wyjścia'); return; }
+    const base = outName(oi).replace(/[^A-Za-z0-9_-]/g,'_');
+    if (b.dataset.img==='ksvg'){ const k = kmapSVG(oi); saveBlob(new Blob([k.svg], {type:'image/svg+xml'}), `karnaugh_${base}.svg`); }
+    else if (b.dataset.img==='kpng'){ const k = kmapSVG(oi); svgToPng(k.svg, k.w, k.h, blob => saveBlob(blob, `karnaugh_${base}.png`)); }
+    else { const l = ldSVG(oi, true); if (!l){ toast('To wyjście jest zawsze 0, brak drabinki'); return; } svgToPng(l.svg, l.w, l.h, blob => saveBlob(blob, `LD_${base}.png`)); }
+  }));
+  $('#copyPrompt').addEventListener('click', () => {
+    if (!$('#taskText').value.trim()){ toast('Najpierw wklej treść zadania'); $('#taskText').focus(); return; }
+    copy(aiPrompt($('#taskText').value));
+  });
+  $('#importJson').addEventListener('click', () => {
+    try {
+      const r = importJSON($('#jsonIn').value);
+      msg($('#aiNote'), r.explanation ? 'info' : null, r.explanation ? '<b>Założenia AI:</b> ' + esc(r.explanation) : '');
+      toast(`Wczytano ${P.outputs.length} wyjść`, {label:'Cofnij', fn:() => restore(r.snap)});
+    } catch(e){ msg($('#aiNote'), 'err', esc(e.message)); }
+  });
+  $('#copyProject').addEventListener('click', () => copy(projectJSON()));
+  $('#saveProject').addEventListener('click', () => download(new Blob([projectJSON()], {type:'application/json'}), 'karnaugh_projekt.json'));
+  $('#fileIn').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => { try { const r = importJSON(String(rd.result)); toast(`Wczytano ${P.outputs.length} wyjść`, {label:'Cofnij', fn:() => restore(r.snap)}); setView('fn'); } catch(err){ msg($('#aiNote'),'err',esc(err.message)); toast('Błąd pliku: ' + err.message); } };
+    rd.readAsText(f); e.target.value = '';
+  });
 
-  // start with lab example
-  $('#preset').value = 'z1';
-  const p0 = PRESETS.z1; $('#fname').value = p0.name; $('#fexpr').value = p0.f; $('#xexpr').value = p0.x; $('#nvars').value = p0.n;
-  recompute();
+  /* ================= start ================= */
+  renderPresets();
+  loadPreset('s4', false);
+  setView('fn');
+  window.__karnaugh = {P, get D(){ return D; }, recompute, setCells, cycleCell, loadPreset, setView, codeFor, latexFor, kmapSVG, ldSVG, importJSON, aiPrompt, addOutput, deleteOutput, setsText};
 })();
 </script>
 </body>
