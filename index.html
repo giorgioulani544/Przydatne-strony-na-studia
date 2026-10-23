@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Karnaugh">
+<meta name="theme-color" content="#f5f1e6">
+<title>Karnaugh na szybko</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f5f1e6; --paper2:#fffdf7; --ink:#1b2a4a; --muted:#6b7385; --line:#c9cfdb;
+    --grid:rgba(27,42,74,.06); --margin:#d9534f; --accent:#1f6fd1; --err:#b42318; --ok:#1f8a4c;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace; --sans:"Inter",-apple-system,system-ui,sans-serif;
+    --cell:clamp(52px,17vw,68px);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:var(--sans); color:var(--ink); background-color:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:20px 20px;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 24px) env(safe-area-inset-left);
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:16px 14px 0 26px;position:relative}
+  .wrap::before{content:"";position:absolute;left:12px;top:0;bottom:0;width:2px;background:var(--margin);opacity:.55}
+  header h1{font-size:22px;margin:6px 0 2px;letter-spacing:-.01em}
+  header p{margin:0 0 14px;color:var(--muted);font-size:14px}
+  .card{background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;box-shadow:0 1px 0 rgba(27,42,74,.05)}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px;font-weight:600}
+  label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
+  label:first-of-type{margin-top:0}
+  .hint{font-weight:400;color:var(--muted)}
+  input[type=text],select{
+    width:100%;font-family:var(--mono);font-size:17px;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;
+    background:#fff;color:var(--ink);outline:none;-webkit-appearance:none;appearance:none
+  }
+  select{font-family:var(--sans);font-size:16px;background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+  input[type=text]:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(31,111,209,.15)}
+  input.bad{border-color:var(--err)}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1;min-width:0}
+  .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:10px}
+  .keys button,.btn,.seg button,.chip{
+    font-family:var(--mono);font-size:17px;min-height:44px;border-radius:8px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent
+  }
+  .keys button:active,.btn:active{background:#eef3fb}
+  .keys .wide{font-family:var(--sans);font-size:14px}
+  button:focus-visible,.cell:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .msg{font-size:14px;margin-top:10px;padding:9px 11px;border-radius:8px;display:none}
+  .msg.err{display:block;background:#fdecea;color:var(--err)}
+  .msg.warn{display:block;background:#fff6e0;color:#8a5a00}
+  .msg button{font:inherit;color:inherit;text-decoration:underline;background:none;border:0;padding:0;cursor:pointer}
+  details summary{cursor:pointer;font-size:14px;color:var(--accent);margin-top:10px;min-height:32px;display:flex;align-items:center}
+  details ul{margin:6px 0 0;padding-left:18px;font-size:14px;line-height:1.55}
+  code{font-family:var(--mono);background:#eef1f6;padding:1px 5px;border-radius:4px;font-size:.92em}
+
+  /* K-map */
+  .kwrap{display:flex;justify-content:center;overflow-x:auto;padding:4px 0 2px}
+  .kmap{display:grid;position:relative;user-select:none;-webkit-user-select:none}
+  .corner{position:relative;font-family:var(--mono);font-size:13px;font-weight:700}
+  .corner svg{position:absolute;inset:0;width:100%;height:100%}
+  .corner .r{position:absolute;right:6px;top:4px}
+  .corner .l{position:absolute;left:4px;bottom:4px}
+  .hd{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:14px;color:var(--ink)}
+  .cell{
+    width:var(--cell);height:var(--cell);border:0;border-right:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);
+    background:#fff;font-family:var(--mono);font-size:22px;font-weight:700;color:var(--ink);padding:0;position:relative;cursor:pointer;
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent
+  }
+  .cell .m{position:absolute;left:4px;bottom:2px;font-size:10px;font-weight:400;color:#9aa1b1}
+  .cell.v0{color:#8a93a6;font-weight:400}
+  .cell.vX{color:#9aa1b1;font-weight:400;font-style:italic}
+  .cell.top{border-top:1.5px solid var(--ink)} .cell.left{border-left:1.5px solid var(--ink)}
+  .cell:active{background:#eef3fb}
+  .loops{pointer-events:none;overflow:visible}
+  .loops rect{fill:none;stroke-width:3.2;vector-effect:non-scaling-stroke;animation:fade .25s ease-out}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .tapnote{text-align:center;font-size:12.5px;color:var(--muted);margin-top:8px}
+
+  .seg{display:flex;gap:6px;margin:4px 0 12px}
+  .seg button{flex:1;font-family:var(--sans);font-size:14px;font-weight:600}
+  .seg button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .res{border:1.5px solid var(--line);border-radius:9px;padding:11px 12px;margin-bottom:10px;background:#fff}
+  .res.active{border-color:var(--ink)}
+  .res .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+  .res .kind{font-size:12.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .badge{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:99px;background:#e7f5ec;color:var(--ok)}
+  .badge.tie{background:#eef1f6;color:var(--muted)}
+  .formula{font-family:var(--mono);font-size:20px;line-height:1.7;word-break:break-word}
+  .ov{text-decoration:overline;text-decoration-thickness:1.5px}
+  .meta{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .chip{font-size:13px;min-height:34px;padding:0 10px;font-family:var(--sans)}
+  .chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .btn{font-family:var(--sans);font-size:14px;font-weight:600;padding:0 14px}
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .groups{font-size:13.5px;line-height:1.6;margin-top:8px}
+  .groups .sw{display:inline-block;width:12px;height:12px;border:3px solid;border-radius:4px;vertical-align:-1px;margin-right:6px}
+
+  table.tt{border-collapse:collapse;font-family:var(--mono);font-size:15px;margin:0 auto}
+  table.tt th,table.tt td{border:1px solid var(--line);padding:5px 10px;text-align:center}
+  table.tt th{background:#eef1f6;font-weight:700}
+  table.tt td.m{color:#9aa1b1;font-size:12px}
+  table.tt td.f1{font-weight:700} table.tt td.f0{color:#8a93a6} table.tt td.fX{color:#9aa1b1;font-style:italic}
+  .ttwrap{overflow-x:auto}
+  .sets{font-family:var(--mono);font-size:14px;line-height:1.7;word-break:break-word}
+  .ld{overflow-x:auto}
+  .ld svg{display:block;margin:0 auto;max-width:100%;height:auto}
+  .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;font-size:14px;opacity:0;transition:.2s;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .empty{color:var(--muted);font-size:14px;text-align:center;padding:10px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Karnaugh na szybko</h1>
+    <p>Wpisz wzór albo numery kratek, a dostaniesz tabelę prawdy, tablicę z pętlami, postać minimalną i drabinkę LD.</p>
+  </header>
+
+  <section class="card" aria-labelledby="h-in">
+    <h2 id="h-in">Funkcja</h2>
+    <div class="row">
+      <div style="flex:0 0 34%">
+        <label for="fname">Nazwa</label>
+        <input id="fname" type="text" value="Z1" autocomplete="off" autocapitalize="off" spellcheck="false">
+      </div>
+      <div>
+        <label for="preset">Przykład</label>
+        <select id="preset">
+          <option value="">— wybierz —</option>
+          <option value="z1">Lab03 z.4 – Z1</option>
+          <option value="z2">Lab03 z.4 – Z2</option>
+          <option value="z3">Lab03 z.4 – Z3</option>
+          <option value="z4">Lab03 z.4 – Z4</option>
+          <option value="f1">Wzór: a'b + c'd</option>
+          <option value="f2">Wzór: (a+b)·¬c + a·d</option>
+          <option value="f3">XOR 3 zmiennych</option>
+        </select>
+      </div>
+    </div>
+
+    <label for="fexpr">Jedynki funkcji <span class="hint">– wzór albo lista kratek, np. <code>0,2,8</code></span></label>
+    <input id="fexpr" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-describedby="fmsg">
+
+    <label for="xexpr">Stany nieokreślone X <span class="hint">– opcjonalnie, wzór albo lista</span></label>
+    <input id="xexpr" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="np. ~a·b + ~c·d  lub  1,4,5">
+
+    <div class="row">
+      <div>
+        <label for="nvars">Liczba zmiennych</label>
+        <select id="nvars">
+          <option value="auto">auto</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+        </select>
+      </div>
+      <div>
+        <label for="vorder">Kolejność <span class="hint">(opcjonalnie)</span></label>
+        <input id="vorder" type="text" placeholder="abcd" autocomplete="off" autocapitalize="off" spellcheck="false">
+      </div>
+    </div>
+
+    <div class="keys" role="group" aria-label="Szybkie znaki">
+      <button type="button" data-k="a">a</button><button type="button" data-k="b">b</button>
+      <button type="button" data-k="c">c</button><button type="button" data-k="d">d</button>
+      <button type="button" data-k="¬" aria-label="negacja">¬</button><button type="button" data-k="'" aria-label="negacja po zmiennej">'</button>
+      <button type="button" data-k="·" aria-label="iloczyn">·</button><button type="button" data-k=" + " aria-label="suma">+</button>
+      <button type="button" data-k="(">(</button><button type="button" data-k=")">)</button>
+      <button type="button" data-k="," aria-label="przecinek">,</button><button type="button" class="wide" data-k="BS" aria-label="usuń znak">⌫</button>
+    </div>
+
+    <div id="fmsg" class="msg" role="status" aria-live="polite"></div>
+
+    <details>
+      <summary>Jak wpisywać?</summary>
+      <ul>
+        <li>Negacja: <code>¬a</code>, <code>~a</code>, <code>!a</code> albo <code>a'</code></li>
+        <li>Iloczyn: <code>a·b</code>, <code>a*b</code>, <code>a&amp;b</code> albo po prostu <code>ab</code></li>
+        <li>Suma: <code>a+b</code> lub <code>a|b</code>. XOR: <code>a^b</code>. Do tego nawiasy, <code>0</code> i <code>1</code></li>
+        <li>Lista kratek: <code>0,2,8</code> lub <code>m(0,2,8)</code>. Pierwsza zmienna to najstarszy bit, czyli kratka 8 to a=1, b=0, c=0, d=0</li>
+        <li>Stuknięcie w kratkę tablicy przełącza jej wartość: 0 → 1 → X → 0</li>
+      </ul>
+    </details>
+  </section>
+
+  <section class="card" aria-labelledby="h-k">
+    <h2 id="h-k">Tablica Karnaugha</h2>
+    <div class="seg" role="group" aria-label="Co zaznaczać pętlami">
+      <button type="button" id="segSop" aria-pressed="true">Sklejanie jedynek</button>
+      <button type="button" id="segPos" aria-pressed="false">Sklejanie zer</button>
+    </div>
+    <div class="kwrap"><div id="kmap" class="kmap" aria-label="Tablica Karnaugha"></div></div>
+    <div class="tapnote">Stuknij w kratkę, żeby zmienić wartość (0 → 1 → X)</div>
+    <div id="groups" class="groups"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-r">
+    <h2 id="h-r">Postać minimalna</h2>
+    <div id="results"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-ld">
+    <h2 id="h-ld">Drabinka LD <span class="hint" style="text-transform:none;letter-spacing:0" id="ldform"></span></h2>
+    <div id="ld" class="ld"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-t">
+    <h2 id="h-t">Tabela prawdy</h2>
+    <div id="sets" class="sets"></div>
+    <div class="actions"><button type="button" class="btn" id="copySets">Kopiuj zapis kratek</button></div>
+    <div class="ttwrap" style="margin-top:12px"><table class="tt" id="tt"></table></div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const GRAY = {1:['0','1'], 2:['00','01','11','10']};
+  const COLORS = ['#d1342b','#1f6fd1','#1f9a5a','#c47a00','#8a3fd1','#0f9aa6','#d1307f','#5b6b00'];
+  const PRESETS = {
+    z1:{name:'Z1', f:'0,2,8', x:'~a·b + ~c·d', n:'4'},
+    z2:{name:'Z2', f:'3,12', x:'~a·b + ~c·d', n:'4'},
+    z3:{name:'Z3', f:'10,11,14', x:'~a·b + ~c·d', n:'4'},
+    z4:{name:'Z4', f:'~a·b + ~c·d', x:'', n:'4'},
+    f1:{name:'F', f:"a'b + c'd", x:'', n:'auto'},
+    f2:{name:'F', f:'(a+b)·¬c + a·d', x:'', n:'auto'},
+    f3:{name:'F', f:'a^b^c', x:'', n:'auto'}
+  };
+  const S = { vars:['a','b','c','d'], vals:[], manual:false, mode:'sop', variant:{sop:0,pos:0}, res:null, lastInput:null };
+
+  /* ---------- parser ---------- */
+  function tokenize(src){
+    const s = src.normalize('NFD'); const t = []; let i = 0;
+    while (i < s.length){
+      const ch = s[i];
+      if (/\s/.test(ch)) { i++; continue; }
+      if (/[a-zA-Z]/.test(ch)) { t.push({k:'v', v:ch.toLowerCase(), p:i}); i++; continue; }
+      if (ch === '0' || ch === '1') { t.push({k:'c', v:+ch, p:i}); i++; continue; }
+      if ('+|∨'.includes(ch)) { t.push({k:'or', p:i}); i++; continue; }
+      if ('·*&∧⋅.•'.includes(ch)) { t.push({k:'and', p:i}); i++; continue; }
+      if ('^⊕'.includes(ch)) { t.push({k:'xor', p:i}); i++; continue; }
+      if ('!~¬'.includes(ch)) { t.push({k:'not', p:i}); i++; continue; }
+      if ("'’′\u0304\u0305".includes(ch)) { t.push({k:'post', p:i}); i++; continue; }
+      if (ch === '(' || ch === ')') { t.push({k:ch, p:i}); i++; continue; }
+      throw new Error(`Nieznany znak „${ch}”`);
+    }
+    return t;
+  }
+  function parse(src){
+    const tk = tokenize(src); let p = 0;
+    if (!tk.length) return null;
+    const peek = () => tk[p];
+    const expr = () => { let l = xor(); while (peek() && peek().k === 'or'){ p++; l = {t:'or', a:l, b:xor()}; } return l; };
+    const xor = () => { let l = term(); while (peek() && peek().k === 'xor'){ p++; l = {t:'xor', a:l, b:term()}; } return l; };
+    const term = () => {
+      let l = factor();
+      for(;;){
+        const q = peek(); if (!q) break;
+        if (q.k === 'and'){ p++; l = {t:'and', a:l, b:factor()}; continue; }
+        if (['v','c','(','not'].includes(q.k)){ l = {t:'and', a:l, b:factor()}; continue; }
+        break;
+      }
+      return l;
+    };
+    const factor = () => {
+      const q = peek(); if (!q) throw new Error('Wzór się urywa, brakuje zmiennej');
+      if (q.k === 'not'){ p++; return {t:'not', a:factor()}; }
+      let x = primary();
+      while (peek() && peek().k === 'post'){ p++; x = {t:'not', a:x}; }
+      return x;
+    };
+    const primary = () => {
+      const q = tk[p++]; if (!q) throw new Error('Wzór się urywa');
+      if (q.k === 'v') return {t:'v', n:q.v};
+      if (q.k === 'c') return {t:'c', v:q.v};
+      if (q.k === '('){ const e = expr(); if (!peek() || peek().k !== ')') throw new Error('Brakuje nawiasu „)”'); p++; return e; }
+      if (q.k === ')') throw new Error('Za dużo nawiasów „)”');
+      throw new Error('Operator w złym miejscu, np. dwa „+” obok siebie');
+    };
+    const e = expr();
+    if (p < tk.length) throw new Error(tk[p].k === ')' ? 'Za dużo nawiasów „)”' : 'Nie rozumiem końcówki wzoru');
+    return e;
+  }
+  function varsOf(n, set){ if (!n) return set; if (n.t==='v') set.add(n.n); if (n.a) varsOf(n.a,set); if (n.b) varsOf(n.b,set); return set; }
+  function ev(n, env){
+    switch(n.t){
+      case 'v': return env[n.n]; case 'c': return n.v; case 'not': return 1-ev(n.a,env);
+      case 'and': return ev(n.a,env)&ev(n.b,env); case 'or': return ev(n.a,env)|ev(n.b,env); case 'xor': return ev(n.a,env)^ev(n.b,env);
+    }
+  }
+  const LIST_RE = /^\s*(?:[Σ∑]?\s*m\s*)?\(?\s*\d+(?:\s*[,;]\s*\d+)*\s*\)?\s*$/i;
+  function readInput(src){
+    const s = src.trim();
+    if (!s) return {kind:'empty'};
+    if (LIST_RE.test(s) && (/[,;]/.test(s) || /^[Σ∑m]/i.test(s) || !/^[01]$/.test(s))){
+      const nums = (s.match(/\d+/g)||[]).map(Number);
+      return {kind:'list', nums};
+    }
+    return {kind:'expr', ast:parse(s)};
+  }
+
+  /* ---------- compute values ---------- */
+  function compute(){
+    const fIn = readInput($('#fexpr').value), xIn = readInput($('#xexpr').value);
+    const found = new Set();
+    [fIn,xIn].forEach(r => { if (r.kind==='expr') varsOf(r.ast, found); });
+    let vars, nSel = $('#nvars').value, order = $('#vorder').value.toLowerCase().replace(/[^a-z]/g,'');
+    const foundArr = [...found].sort();
+    const maxIdx = Math.max(-1, ...[fIn,xIn].filter(r=>r.kind==='list').flatMap(r=>r.nums));
+    if (order){
+      vars = [...new Set(order.split(''))];
+      const miss = foundArr.filter(v=>!vars.includes(v));
+      if (miss.length) throw new Error(`Zmienna „${miss.join(', ')}” nie występuje w polu „Kolejność”`);
+    } else {
+      let n;
+      if (nSel !== 'auto') n = +nSel;
+      else if (foundArr.length) n = Math.max(2, foundArr.length, maxIdx>=0 ? Math.max(2,Math.ceil(Math.log2(maxIdx+1))) : 0);
+      else n = maxIdx >= 0 ? Math.max(2, Math.ceil(Math.log2(maxIdx+1))) : 4;
+      if (n > 4 || foundArr.length > 4) throw new Error('Maksymalnie 4 zmienne, bo tablica Karnaugha ma tu 4×4 kratki');
+      if (foundArr.length > n) throw new Error(`Wzór ma ${foundArr.length} zmienne, a wybrano ${n}`);
+      vars = foundArr.slice();
+      for (const c of 'abcdefghijklmnopqrstuvwxyz'){ if (vars.length>=n) break; if (!vars.includes(c)) vars.push(c); }
+      vars.sort();
+    }
+    if (vars.length > 4) throw new Error('Maksymalnie 4 zmienne');
+    if (vars.length < 2) throw new Error('Potrzebne są co najmniej 2 zmienne');
+    const n = vars.length, N = 1<<n;
+    [fIn,xIn].forEach(r => { if (r.kind==='list'){ const bad = r.nums.filter(v=>v>=N); if (bad.length) throw new Error(`Kratka ${bad[0]} nie istnieje, przy ${n} zmiennych są kratki 0–${N-1}`); }});
+    const inSet = (r, m) => {
+      if (r.kind==='empty') return false;
+      if (r.kind==='list') return r.nums.includes(m);
+      const env = {}; vars.forEach((v,i)=> env[v] = (m >> (n-1-i)) & 1);
+      return !!ev(r.ast, env);
+    };
+    const vals = []; let conflicts = 0;
+    for (let m=0; m<N; m++){
+      const f = inSet(fIn,m), x = inSet(xIn,m);
+      if (f && x) conflicts++;
+      vals.push(x ? 'X' : (f ? '1' : '0'));
+    }
+    return {vars, vals, conflicts, empty: fIn.kind==='empty' && xIn.kind==='empty'};
+  }
+
+  /* ---------- minimization (exact, prime implicants + branch&bound) ---------- */
+  const pc = x => { let c=0; while(x){ c+=x&1; x>>=1; } return c; };
+  function minimize(vals, n, target){
+    const N = 1<<n, full = N-1, ok = [], T = [];
+    for (let m=0;m<N;m++){ ok[m] = vals[m]===target || vals[m]==='X'; if (vals[m]===target) T.push(m); }
+    if (!T.length) return {constant:true, value:0, sols:[[]]};
+    const cubes = [];
+    for (let mask=0; mask<=full; mask++){
+      for (let v=mask;; v=(v-1)&mask){
+        let good = true; const cells = [];
+        for (let m=0;m<N;m++) if ((m&mask)===v){ if (!ok[m]){ good=false; break; } cells.push(m); }
+        if (good) cubes.push({mask, val:v, cells, lits:pc(mask), id:cubes.length});
+        if (v===0) break;
+      }
+    }
+    const contains = (o,c) => o!==c && (o.mask & c.mask)===o.mask && (c.val & o.mask)===o.val && o.mask!==c.mask;
+    const primes = cubes.filter(c => !cubes.some(o => contains(o,c))).filter(p => p.cells.some(m => vals[m]===target));
+    const whole = primes.find(p => p.mask===0);
+    if (whole) return {constant:true, value:1, sols:[[whole]]};
+    let best = null; const sols = []; const keys = new Set();
+    const cost = s => [s.length, s.reduce((a,p)=>a+p.lits,0)];
+    const cmp = (a,b) => a[0]-b[0] || a[1]-b[1];
+    (function rec(chosen, uncov){
+      if (!uncov.length){
+        const c = cost(chosen), key = chosen.map(p=>p.id).sort((a,b)=>a-b).join(',');
+        if (!best || cmp(c,best)<0){ best=c; sols.length=0; keys.clear(); }
+        if (cmp(c,best)===0 && !keys.has(key) && sols.length<12){ keys.add(key); sols.push(chosen.slice()); }
+        return;
+      }
+      if (best){ const c = cost(chosen); if (cmp([c[0]+1, c[1]+1], best) > 0) return; }
+      let opts = null;
+      for (const m of uncov){ const o = primes.filter(p=>p.cells.includes(m)); if (!opts || o.length<opts.length) opts = o; }
+      for (const p of opts){
+        if (chosen.includes(p)) continue;
+        chosen.push(p); rec(chosen, uncov.filter(m=>!p.cells.includes(m))); chosen.pop();
+      }
+    })([], T);
+    sols.forEach(s => s.sort((a,b)=> b.cells.length-a.cells.length || a.val-b.val));
+    return {constant:false, sols, cost:best};
+  }
+
+  /* ---------- formatting ---------- */
+  function literals(p, vars, kind){
+    const n = vars.length, out = [];
+    for (let i=0;i<n;i++){ const bit = 1<<(n-1-i); if (p.mask & bit){ const one = !!(p.val & bit); out.push({v:vars[i], neg: kind==='sop' ? !one : one}); } }
+    return out;
+  }
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const litH = l => l.neg ? `<span class="ov">${esc(l.v)}</span>` : esc(l.v);
+  const litT = l => (l.neg ? '¬' : '') + l.v;
+  function fmt(sol, vars, kind, html){
+    const L = html ? litH : litT;
+    if (kind==='sop') return sol.map(p => literals(p,vars,'sop').map(L).join('·')).join(' + ');
+    return sol.map(p => { const ls = literals(p,vars,'pos'); const s = ls.map(L).join(' + '); return ls.length>1 ? `(${s})` : s; }).join('·');
+  }
+  function formula(r, vars, kind, idx, html){
+    if (r.constant){
+      const v = kind==='sop' ? r.value : (r.value ? 0 : 1);
+      return String(v);
+    }
+    return fmt(r.sols[idx], vars, kind, html);
+  }
+  const litCount = (r, idx) => r.constant ? 0 : r.sols[idx].reduce((a,p)=>a+p.lits,0);
+
+  /* ---------- rendering ---------- */
+  function layout(n){ return n===4 ? {rv:2, cv:2} : n===3 ? {rv:1, cv:2} : {rv:1, cv:1}; }
+  function cellIndex(n, r, c){ const L = layout(n); return parseInt(GRAY[L.rv][r] + GRAY[L.cv][c], 2); }
+
+  function renderKmap(){
+    const {vars, vals} = S, n = vars.length, L = layout(n), R = GRAY[L.rv].length, C = GRAY[L.cv].length;
+    const k = $('#kmap'); k.innerHTML = '';
+    k.style.gridTemplateColumns = `calc(var(--cell)*.95) repeat(${C}, var(--cell))`;
+    k.style.gridTemplateRows = `calc(var(--cell)*.75) repeat(${R}, var(--cell))`;
+    const rowName = vars.slice(0,L.rv).join(''), colName = vars.slice(L.rv).join('');
+    const corner = document.createElement('div'); corner.className = 'corner';
+    corner.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="0" x2="100" y2="100" stroke="#1b2a4a" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg><span class="r">${esc(colName)}</span><span class="l">${esc(rowName)}</span>`;
+    k.appendChild(corner);
+    GRAY[L.cv].forEach(g => { const d = document.createElement('div'); d.className='hd'; d.textContent=g; k.appendChild(d); });
+    for (let r=0;r<R;r++){
+      const h = document.createElement('div'); h.className='hd'; h.textContent = GRAY[L.rv][r]; k.appendChild(h);
+      for (let c=0;c<C;c++){
+        const m = cellIndex(n,r,c), v = vals[m];
+        const b = document.createElement('button'); b.type='button';
+        b.className = `cell v${v}` + (r===0?' top':'') + (c===0?' left':'');
+        b.innerHTML = `${v}<span class="m" aria-hidden="true">${m}</span>`;
+        b.setAttribute('aria-label', `Kratka ${m}: ${rowName}=${GRAY[L.rv][r]}, ${colName}=${GRAY[L.cv][c]}, wartość ${v==='X'?'nieokreślona':v}. Stuknij, aby zmienić.`);
+        b.addEventListener('click', () => cycle(m));
+        k.appendChild(b);
+      }
+    }
+    // loops overlay
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS,'svg');
+    svg.setAttribute('class','loops'); svg.setAttribute('viewBox',`0 0 ${C} ${R}`); svg.setAttribute('preserveAspectRatio','none'); svg.setAttribute('aria-hidden','true');
+    svg.style.gridRow = `2 / span ${R}`; svg.style.gridColumn = `2 / span ${C}`; svg.style.width='100%'; svg.style.height='100%'; svg.style.zIndex='2';
+    const clipId = 'clip' + Math.random().toString(36).slice(2,7);
+    svg.innerHTML = `<defs><clipPath id="${clipId}"><rect x="-0.03" y="-0.03" width="${C+0.06}" height="${R+0.06}"/></clipPath></defs>`;
+    const g = document.createElementNS(svgNS,'g'); g.setAttribute('clip-path',`url(#${clipId})`); svg.appendChild(g);
+    const groupsBox = $('#groups'); groupsBox.innerHTML = '';
+    const res = S.res && S.res[S.mode];
+    if (res && !res.constant){
+      const sol = res.sols[S.variant[S.mode]] || res.sols[0];
+      const lines = [];
+      sol.forEach((p, i) => {
+        const col = COLORS[i % COLORS.length], inset = 0.07 + 0.065*(i%4);
+        const rows = [], cols = [];
+        for (let r=0;r<R;r++) for (let c=0;c<C;c++){ const m = cellIndex(n,r,c); if ((m & p.mask)===p.val){ if(!rows.includes(r)) rows.push(r); if(!cols.includes(c)) cols.push(c); } }
+        runs(rows,R).forEach(rr => runs(cols,C).forEach(cc => {
+          const x0 = cc.s + inset - (cc.ws?0.75:0), x1 = cc.e + 1 - inset + (cc.we?0.75:0);
+          const y0 = rr.s + inset - (rr.ws?0.75:0), y1 = rr.e + 1 - inset + (rr.we?0.75:0);
+          const rect = document.createElementNS(svgNS,'rect');
+          rect.setAttribute('x',x0); rect.setAttribute('y',y0); rect.setAttribute('width',x1-x0); rect.setAttribute('height',y1-y0);
+          rect.setAttribute('rx',0.26); rect.setAttribute('ry',0.26); rect.setAttribute('stroke',col);
+          g.appendChild(rect);
+        }));
+        const term = S.mode==='sop' ? literals(p,S.vars,'sop').map(litH).join('·') : (()=>{const ls=literals(p,S.vars,'pos'); return ls.map(litH).join(' + ');})();
+        lines.push(`<div><span class="sw" style="border-color:${col}"></span><span style="font-family:var(--mono)">${term}</span> <span style="color:var(--muted)">– kratki ${p.cells.join(', ')}</span></div>`);
+      });
+      groupsBox.innerHTML = lines.join('');
+    } else if (res && res.constant){
+      groupsBox.innerHTML = `<div class="empty">Funkcja jest stała, więc nie ma czego sklejać.</div>`;
+    }
+    k.appendChild(svg);
+  }
+  function runs(idx, size){
+    idx.sort((a,b)=>a-b);
+    if (idx.length===size) return [{s:0, e:size-1}];
+    if (idx[idx.length-1]-idx[0] === idx.length-1) return [{s:idx[0], e:idx[idx.length-1]}];
+    return [{s:idx[idx.length-1], e:size-1, we:true}, {s:0, e:idx[0], ws:true}];
+  }
+
+  function renderResults(){
+    const box = $('#results'), {vars} = S, name = esc($('#fname').value.trim() || 'F');
+    const r = S.res;
+    const lc = {sop: litCount(r.sop, S.variant.sop), pos: litCount(r.pos, S.variant.pos)};
+    const better = lc.sop < lc.pos ? 'sop' : lc.pos < lc.sop ? 'pos' : 'tie';
+    const block = kind => {
+      const rr = r[kind], idx = S.variant[kind];
+      const title = kind==='sop' ? 'Dysjunkcyjna (z jedynek)' : 'Koniunkcyjna (z zer)';
+      const badge = better==='tie' ? `<span class="badge tie">równie krótka</span>` : better===kind ? `<span class="badge">krótsza</span>` : '';
+      const nTerms = rr.constant ? 0 : rr.sols[idx].length;
+      const meta = rr.constant ? 'funkcja stała' : `${nTerms} ${kind==='sop'?'iloczyn(y)':'suma(y)'}, ${lc[kind]} zmiennych we wzorze` + (rr.sols.length>1 ? ` · ${rr.sols.length} równorzędne warianty` : '');
+      const chips = (!rr.constant && rr.sols.length>1) ? `<div class="chips" role="group" aria-label="Warianty">${rr.sols.map((_,i)=>`<button type="button" class="chip" data-kind="${kind}" data-i="${i}" aria-pressed="${i===idx}">Wariant ${i+1}</button>`).join('')}</div>` : '';
+      return `<div class="res ${S.mode===kind?'active':''}">
+        <div class="top"><span class="kind">${title}</span>${badge}</div>
+        <div class="formula">${name} = ${formula(rr, vars, kind, idx, true)}</div>
+        <div class="meta">${meta}</div>${chips}
+        <div class="actions">
+          <button type="button" class="btn ${S.mode===kind?'primary':''}" data-show="${kind}">${S.mode===kind?'Pokazane w tablicy':'Pokaż w tablicy'}</button>
+          <button type="button" class="btn" data-copy="${kind}">Kopiuj</button>
+        </div></div>`;
+    };
+    box.innerHTML = block('sop') + block('pos');
+    box.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { S.variant[b.dataset.kind] = +b.dataset.i; S.mode = b.dataset.kind; renderAll(false); }));
+    box.querySelectorAll('[data-show]').forEach(b => b.addEventListener('click', () => { S.mode = b.dataset.show; renderAll(false); }));
+    box.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
+      const kind = b.dataset.copy;
+      copy(`${$('#fname').value.trim()||'F'} = ${formula(r[kind], vars, kind, S.variant[kind], false)}`);
+    }));
+  }
+
+  function renderTT(){
+    const {vars, vals} = S, n = vars.length, name = esc($('#fname').value.trim() || 'F');
+    let h = `<thead><tr><th>m</th>${vars.map(v=>`<th>${esc(v)}</th>`).join('')}<th>${name}</th></tr></thead><tbody>`;
+    vals.forEach((v,m) => { h += `<tr><td class="m">${m}</td>${vars.map((_,i)=>`<td>${(m>>(n-1-i))&1}</td>`).join('')}<td class="f${v}">${v}</td></tr>`; });
+    $('#tt').innerHTML = h + '</tbody>';
+    const ones = [], zeros = [], xs = [];
+    vals.forEach((v,m)=> (v==='1'?ones:v==='0'?zeros:xs).push(m));
+    S.setsText = `${$('#fname').value.trim()||'F'}(${vars.join(',')}) = Σm(${ones.join(',')})` + (xs.length?` + d(${xs.join(',')})`:'') + `\nΠM(${zeros.join(',')})` + (xs.length?` · D(${xs.join(',')})`:'');
+    $('#sets').innerHTML = esc(S.setsText).replace('\n','<br>');
+  }
+
+  function renderLD(){
+    const box = $('#ld'), kind = S.mode, r = S.res[kind], name = $('#fname').value.trim() || 'F';
+    $('#ldform').textContent = kind==='sop' ? '– wg postaci dysjunkcyjnej' : '– wg postaci koniunkcyjnej';
+    const W = 74, RH = 66, top = 46;
+    const contact = (x, y, l) => `
+      <line x1="${x}" y1="${y}" x2="${x+24}" y2="${y}"/><line x1="${x+50}" y1="${y}" x2="${x+W}" y2="${y}"/>
+      <line x1="${x+24}" y1="${y-13}" x2="${x+24}" y2="${y+13}" stroke-width="2.4"/><line x1="${x+50}" y1="${y-13}" x2="${x+50}" y2="${y+13}" stroke-width="2.4"/>
+      ${l.neg ? `<line x1="${x+19}" y1="${y+14}" x2="${x+55}" y2="${y-14}"/>` : ''}
+      <text x="${x+37}" y="${y-21}" text-anchor="middle" class="t">${esc(l.v)}</text>
+      <text x="${x+37}" y="${y+30}" text-anchor="middle" class="s">${l.neg?'NC':'NO'}</text>`;
+    const coil = (x, y) => `<line x1="${x}" y1="${y}" x2="${x+20}" y2="${y}"/>
+      <path d="M ${x+28} ${y-14} Q ${x+18} ${y} ${x+28} ${y+14}" fill="none" stroke-width="2.4"/>
+      <path d="M ${x+44} ${y-14} Q ${x+54} ${y} ${x+44} ${y+14}" fill="none" stroke-width="2.4"/>
+      <line x1="${x+52}" y1="${y}" x2="${x+72}" y2="${y}"/>
+      <text x="${x+36}" y="${y-21}" text-anchor="middle" class="t">${esc(name)}</text>`;
+    let body = '', width, height;
+    if (r.constant){
+      const v = kind==='sop' ? r.value : (r.value?0:1);
+      if (!v){ box.innerHTML = `<div class="empty">Wyjście jest zawsze 0, więc cewka zostaje bez zasilania.</div>`; return; }
+      width = 260; height = 100; body = `<line x1="12" y1="${top}" x2="150" y2="${top}"/>${coil(150, top)}`;
+      body = `<line x1="10" y1="10" x2="10" y2="${height-10}" stroke-width="4"/>` + body;
+    } else {
+      const sol = r.sols[S.variant[kind]] || r.sols[0];
+      let x = 30; const parts = [];
+      if (kind === 'sop'){
+        const branches = sol.map(p => literals(p, S.vars, 'sop'));
+        const maxLen = Math.max(...branches.map(b=>b.length));
+        const x0 = 30, x1 = x0 + 16 + maxLen*W + 16;
+        branches.forEach((br, i) => {
+          const y = top + i*RH; let xx = x0 + 16;
+          parts.push(`<line x1="${x0}" y1="${y}" x2="${xx}" y2="${y}"/>`);
+          br.forEach(l => { parts.push(contact(xx, y, l)); xx += W; });
+          parts.push(`<line x1="${xx}" y1="${y}" x2="${x1}" y2="${y}"/>`);
+        });
+        if (branches.length>1) parts.push(`<line x1="${x0}" y1="${top}" x2="${x0}" y2="${top+(branches.length-1)*RH}"/><line x1="${x1}" y1="${top}" x2="${x1}" y2="${top+(branches.length-1)*RH}"/>`);
+        parts.push(`<line x1="10" y1="${top}" x2="${x0}" y2="${top}"/>`);
+        x = x1; height = top + (branches.length-1)*RH + 50;
+      } else {
+        const blocks = sol.map(p => literals(p, S.vars, 'pos'));
+        parts.push(`<line x1="10" y1="${top}" x2="${x}" y2="${top}"/>`);
+        let maxK = 1;
+        blocks.forEach(bl => {
+          if (bl.length === 1){ parts.push(contact(x, top, bl[0])); x += W; return; }
+          maxK = Math.max(maxK, bl.length);
+          const xa = x + 10, xb = xa + W + 10;
+          parts.push(`<line x1="${x}" y1="${top}" x2="${xa}" y2="${top}"/>`);
+          bl.forEach((l, j) => { const y = top + j*RH; parts.push(`<line x1="${xa}" y1="${y}" x2="${xa+5}" y2="${y}"/>`); parts.push(contact(xa+5, y, l)); parts.push(`<line x1="${xa+5+W}" y1="${y}" x2="${xb}" y2="${y}"/>`); });
+          parts.push(`<line x1="${xa}" y1="${top}" x2="${xa}" y2="${top+(bl.length-1)*RH}"/><line x1="${xb}" y1="${top}" x2="${xb}" y2="${top+(bl.length-1)*RH}"/>`);
+          x = xb + 10; parts.push(`<line x1="${xb}" y1="${top}" x2="${x}" y2="${top}"/>`);
+        });
+        height = top + (maxK-1)*RH + 50;
+      }
+      const xc = Math.max(x + 20, 200);
+      parts.push(`<line x1="${x}" y1="${top}" x2="${xc}" y2="${top}"/>`, coil(xc, top));
+      width = xc + 90;
+      body = `<line x1="10" y1="12" x2="10" y2="${height-8}" stroke-width="4"/><line x1="${xc+72}" y1="12" x2="${xc+72}" y2="${height-8}" stroke-width="4"/>` + parts.join('');
+    }
+    box.innerHTML = `<svg viewBox="0 0 ${width} ${height}" width="${width}" role="img" aria-label="Schemat drabinkowy LD dla ${esc(name)}">
+      <style>line,path{stroke:#1b2a4a;stroke-width:1.6;stroke-linecap:round}.t{font:600 13px 'JetBrains Mono',monospace;fill:#1f4f9a}.s{font:10px Inter,sans-serif;fill:#8a93a6}</style>${body}</svg>`;
+  }
+
+  function showMsg(type, html){ const m = $('#fmsg'); m.className = 'msg' + (type ? ' '+type : ''); m.innerHTML = html || ''; }
+
+  function renderAll(recalc){
+    if (recalc){
+      S.res = { sop: minimize(S.vals, S.vars.length, '1'), pos: minimize(S.vals, S.vars.length, '0') };
+      S.variant = {sop:0, pos:0};
+    }
+    $('#segSop').setAttribute('aria-pressed', S.mode==='sop'); $('#segPos').setAttribute('aria-pressed', S.mode==='pos');
+    renderKmap(); renderResults(); renderTT(); renderLD();
+  }
+
+  function recompute(){
+    $('#fexpr').classList.remove('bad'); $('#xexpr').classList.remove('bad');
+    try{
+      const r = compute();
+      S.vars = r.vars; S.vals = r.vals; S.manual = false;
+      if (r.conflicts) showMsg('warn', `${r.conflicts} kratek wpisano jednocześnie jako 1 i X. Przyjąłem X.`);
+      else if (r.empty) showMsg('warn', 'Wpisz wzór albo listę kratek. Na razie wszystkie kratki mają 0.');
+      else showMsg('', '');
+      renderAll(true);
+    } catch(e){
+      showMsg('err', esc(e.message));
+      const which = (() => { try { readInput($('#fexpr').value); } catch(_){ return '#fexpr'; } try { readInput($('#xexpr').value); } catch(_){ return '#xexpr'; } return null; })();
+      if (which) $(which).classList.add('bad');
+    }
+  }
+
+  function cycle(m){
+    const next = {'0':'1','1':'X','X':'0'};
+    S.vals[m] = next[S.vals[m]];
+    S.manual = true;
+    showMsg('warn', `Tablica zmieniona ręcznie, więc pola z góry już do niej nie pasują. <button type="button" id="restore">Przywróć ze wzoru</button>`);
+    const rb = $('#restore'); if (rb) rb.addEventListener('click', recompute);
+    renderAll(true);
+    const btn = [...document.querySelectorAll('.cell')].find(b => b.querySelector('.m').textContent == m);
+    if (btn) btn.focus({preventScroll:true});
+  }
+
+  function copy(text){
+    const done = () => toast('Skopiowano');
+    if (navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(text).then(done, () => fallback(text, done)); }
+    else fallback(text, done);
+  }
+  function fallback(text, done){
+    const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+    try { document.execCommand('copy'); done(); } catch(e){ toast('Nie udało się skopiować'); }
+    ta.remove();
+  }
+  let tt; function toast(t){ const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(tt); tt = setTimeout(()=>el.classList.remove('show'), 1400); }
+
+  /* ---------- events ---------- */
+  let deb; const sched = () => { clearTimeout(deb); deb = setTimeout(recompute, 160); };
+  ['#fexpr','#xexpr','#vorder'].forEach(id => { $(id).addEventListener('input', sched); $(id).addEventListener('focus', e => S.lastInput = e.target); });
+  $('#nvars').addEventListener('change', recompute);
+  $('#fname').addEventListener('input', () => { if (S.res) renderAll(false); });
+  $('#segSop').addEventListener('click', () => { S.mode='sop'; renderAll(false); });
+  $('#segPos').addEventListener('click', () => { S.mode='pos'; renderAll(false); });
+  $('#copySets').addEventListener('click', () => copy(S.setsText || ''));
+  $('#preset').addEventListener('change', e => {
+    const p = PRESETS[e.target.value]; if (!p) return;
+    $('#fname').value = p.name; $('#fexpr').value = p.f; $('#xexpr').value = p.x; $('#nvars').value = p.n; $('#vorder').value = '';
+    S.mode = 'sop'; recompute();
+  });
+  document.querySelectorAll('.keys button').forEach(b => {
+    b.addEventListener('pointerdown', e => e.preventDefault());
+    b.addEventListener('click', () => {
+      const inp = (S.lastInput && ['fexpr','xexpr','vorder'].includes(S.lastInput.id)) ? S.lastInput : $('#fexpr');
+      const k = b.dataset.k, s = inp.selectionStart ?? inp.value.length, en = inp.selectionEnd ?? inp.value.length;
+      if (k === 'BS'){
+        if (s !== en) inp.setRangeText('', s, en, 'end');
+        else if (s > 0) inp.setRangeText('', s-1, s, 'end');
+      } else inp.setRangeText(k, s, en, 'end');
+      inp.focus({preventScroll:true}); S.lastInput = inp; sched();
+    });
+  });
+
+  // start with lab example
+  $('#preset').value = 'z1';
+  const p0 = PRESETS.z1; $('#fname').value = p0.name; $('#fexpr').value = p0.f; $('#xexpr').value = p0.x; $('#nvars').value = p0.n;
+  recompute();
+})();
+</script>
+</body>
+</html>
